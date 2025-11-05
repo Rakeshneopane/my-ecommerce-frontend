@@ -30,7 +30,7 @@ export default function UserProfile (){
     const handleSubmit = async(e)=>{
         e.preventDefault();
         setLoading(true);
-        const url = "https://my-ecommerce-eta-ruby.vercel.app/api/user"
+        const url = "https://my-ecommerce-eta-ruby.vercel.app/api/users"
         try {
             const response = await fetch(url, {
                 method: "POST",
