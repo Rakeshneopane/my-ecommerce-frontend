@@ -44,7 +44,7 @@ export default function Cart() {
     };
 
     console.log("Sending orderData:", orderData);
-    const response = await fetch("http://localhost:3000/api/orders", {
+    const response = await fetch("https://my-ecommerce-eta-ruby.vercel.app/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(orderData)
@@ -66,7 +66,7 @@ export default function Cart() {
     console.error("Order placement error:", err);
     setOrderStatus("error");
     alert("Failed to place order. Please try again later.");
-    
+
   } finally {
     setLoading(false);
   }

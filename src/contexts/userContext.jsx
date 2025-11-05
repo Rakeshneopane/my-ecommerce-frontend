@@ -4,13 +4,7 @@ const UserContext = createContext();
 
 export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
-
-
-
-       
-
-
-  // ✅ Load user from localStorage when app starts
+  // Load user from localStorage when app starts
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -18,7 +12,7 @@ export function UserProvider({ children }) {
     }
   }, []);
 
-  // ✅ Save to localStorage whenever user changes
+  // Save to localStorage whenever user changes
   useEffect(() => {
     if (user) {
       localStorage.setItem("user", JSON.stringify(user));
@@ -27,13 +21,13 @@ export function UserProvider({ children }) {
     }
   }, [user]);
 
-  // ✅ Update user data (used after signup/login/update)
+  // Update user data (used after signup/login/update)
   const saveUser = (userData) => {
         setUser(userData);
         localStorage.setItem("user", JSON.stringify(userData)); // persist
       };
 
-  // ✅ Logout handler
+  // Logout handler
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");

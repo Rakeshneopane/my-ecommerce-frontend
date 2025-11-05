@@ -12,7 +12,7 @@ export const useProductContext = () => useContext(ProductContext);
 
 export default function ProductProvider({ children }) {
 
-  const { data: productsData, loading, error } = useFetch("http://localhost:3000/api/products");
+  const { data: productsData, loading, error } = useFetch("https://my-ecommerce-eta-ruby.vercel.app/api/products");
   console.log("Fetched raw productsData:", productsData);
   
   const [products, setProducts] = useState([]);

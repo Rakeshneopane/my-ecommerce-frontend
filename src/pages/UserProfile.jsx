@@ -1,5 +1,3 @@
-
-import { useProductContext } from "../contexts/productContext";
 import { useUserContext } from "../contexts/userContext";
 import {useState, useEffect} from "react";
 import { Link } from 'react-router-dom';
@@ -32,7 +30,7 @@ export default function UserProfile (){
     const handleSubmit = async(e)=>{
         e.preventDefault();
         setLoading(true);
-        const url = "http://localhost:3000/api/users"
+        const url = "https://my-ecommerce-eta-ruby.vercel.app/api/user"
         try {
             const response = await fetch(url, {
                 method: "POST",
