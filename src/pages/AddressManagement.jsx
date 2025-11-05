@@ -28,7 +28,7 @@ export default function AddressManagement(){
             return;
         }
 
-        const url = `https://my-ecommerce-eta-ruby.vercel.app/${user._id}/addresses`
+        const url = `https://my-ecommerce-eta-ruby.vercel.app/api/users/${user._id}/addresses`
         try {
             const response = await fetch(url, {
                 method: "POST",
