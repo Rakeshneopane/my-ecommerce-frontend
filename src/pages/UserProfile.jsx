@@ -46,6 +46,7 @@ export default function UserProfile (){
             console.log("Data in userProfile", data);            
             
             saveUser(data.user);
+            localStorage.setItem("userId", data.user._id);
 
             setSuccess("User saved successfully!");
             setFormData({ name: "", surname: "", gender: "", email: "", phone: "" });

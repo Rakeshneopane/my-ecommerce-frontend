@@ -48,6 +48,8 @@ export default function AddressManagement(){
                 addresses: [...(user?.addresses || []), data.address],
             });
 
+            localStorage.setItem("addressId", data.address._id);
+
             setSuccess("Address saved sucessfully");
             setError(null);
             setAddressData({
