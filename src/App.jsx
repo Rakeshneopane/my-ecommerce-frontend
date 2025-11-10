@@ -1,4 +1,4 @@
-import { useState, createContext, useContext } from 'react';
+
 import { Routes,Route } from "react-router-dom";
 
 import ProductProvider from './contexts/productContext';
@@ -13,6 +13,8 @@ import Cart from "./pages/Cart"
 import AddressManagement from './pages/AddressManagement';
 import UserProfile from './pages/UserProfile';
 
+import CreateProduct from './admin/createProduct';
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import './App.css';
@@ -23,7 +25,9 @@ function App() {
     <>
       <ProductProvider >
         <UserProvider>
+           <div className="d-flex flex-column min-vh-100 bg-success-subtle">
             <Header />
+             <main className="flex-grow-1">
             <Routes>
               <Route path="/" element={<Home />}> </Route>
               <Route path="/home" element={<Home />}> </Route>
@@ -33,8 +37,12 @@ function App() {
               <Route path="/cart" element={<Cart />}></Route>
               <Route path="/user" element={<UserProfile />}></Route>
               <Route path="/address" element={<AddressManagement />}></Route>
+              <Route path="/create-product" element={<CreateProduct />}></Route>
             </Routes>
+            </main>
+            
             <Footer />
+            </div>
         </UserProvider>
       </ProductProvider>
     </>

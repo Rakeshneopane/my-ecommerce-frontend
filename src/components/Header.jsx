@@ -26,7 +26,7 @@ export default function Header(){
                             <span className="navbar-toggler-icon"></span>
                         </button>
                         <div className={`collapse navbar-collapse  ${showNav ? "show":""}`}>
-                            <ul className="navbar-nav">
+                            <ul className="navbar-nav ms-auto">
                                 <li className="nav-item mx-2">
                                      <form className="d-flex" onSubmit={handleSearch}>
                                         <input

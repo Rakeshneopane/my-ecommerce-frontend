@@ -1,8 +1,5 @@
 // src/contexts/productContext.jsx
 import { useState, useEffect, createContext, useContext } from "react";
-// import productsData from "../../products.json";
-// import sections from "../../sections.json";
-// import types from "../../types.json";
 import { useFetch } from "../useFetch";
 
 const ProductContext = createContext();
@@ -20,7 +17,7 @@ export default function ProductProvider({ children }) {
   useEffect(() => {
     if (!productsData) return;
 
-    console.log("Fetched:", productsData);
+    // console.log("Fetched:", productsData);
     
     const list = Array.isArray(productsData)
       ? productsData
@@ -102,8 +99,27 @@ export default function ProductProvider({ children }) {
     );
   }
 
-  if (loading) return <div>Loading products...</div>;
-  if (error) return <div>Error loading products</div>;
+if (loading)
+  return (
+    <div className="d-flex flex-column justify-content-center align-items-center vh-100 text-dark">
+      <div
+        className="spinner-border text-dark mb-3"
+        role="status"
+        style={{ width: "3rem", height: "3rem" }}
+      ></div>
+      <h4>Loading products...</h4>
+    </div>
+  );
+
+if (error)
+  return (
+    <div className="d-flex flex-column justify-content-center align-items-center vh-100 text-danger">
+      <i className="bi bi-exclamation-octagon display-4 mb-3"></i>
+      <h4>Something went wrong!</h4>
+      <p className="text-secondary">Please try again later.</p>
+    </div>
+  );
+
 
   return (
     <ProductContext.Provider
