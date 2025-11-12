@@ -14,6 +14,7 @@ import AddressManagement from './pages/AddressManagement';
 import UserProfile from './pages/UserProfile';
 
 import CreateProduct from './admin/createProduct';
+import AdminDashboard from './admin/adminDashboard';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
@@ -37,7 +38,9 @@ function App() {
               <Route path="/cart" element={<Cart />}></Route>
               <Route path="/user" element={<UserProfile />}></Route>
               <Route path="/address" element={<AddressManagement />}></Route>
-              <Route path="/create-product" element={<CreateProduct />}></Route>
+              <Route path="/admin/create-product" element={<CreateProduct />}></Route>
+              <Route path="/admin/edit-product/:productId" element={<CreateProduct />}></Route>
+              <Route path="/admin" element={<AdminDashboard />} />
             </Routes>
             </main>
             

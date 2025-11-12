@@ -1,86 +1,119 @@
-// import products from "../../products.json";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useProductContext } from "../contexts/productContext";
-import {Link} from 'react-router-dom'
+import { Link, useLocation } from "react-router-dom";
 
-export default function Products(){
+export default function Products() {
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
 
-    
-    const { filteredProducts, toggleWishList, toggleCart } = useProductContext();
-    console.log("product: ", filteredProducts);
+  const selectedSection = queryParams.get("section");
+  const selectedType = queryParams.get("type");
+  const { filteredProducts, toggleWishList, toggleCart } = useProductContext();
 
-    const [filterData, setFilterData] = useState({
-        price: [],
-        category: [],
-        rating: [],
-        sort: ""
+  console.log("product: ", filteredProducts);
+
+  const initialCategory = [];
+  if (selectedSection) initialCategory.push(selectedSection);
+  if (selectedType) initialCategory.push(selectedType);
+
+  const [filterData, setFilterData] = useState({
+    price: [],
+    category: initialCategory,
+    rating: [],
+    sort: "",
+  });
+
+  console.log("filteredData:", filterData);
+
+  // Filtering logic
+  const maxPrice = filterData.price.length ? Math.max(...filterData.price) : Infinity;
+
+  const searchTerm = queryParams.get("search")?.toLowerCase() || "";
+
+  const locallyFiltered = filteredProducts.filter((p) => {
+    const priceMatch =
+      filterData.price.length === 0 || p.price <= maxPrice;
+
+    const categoryMatch =
+      filterData.category.length === 0 ||
+      filterData.category.includes(p.category) ||
+      filterData.category.includes(p.section?.name) ||
+      filterData.category.includes(p.types?.name);
+
+    const ratingMatch =
+      filterData.rating.length === 0 ||
+      filterData.rating.some((r) => p.rating >= r);
+
+    const searchMatch =
+      !searchTerm ||
+      p.title.toLowerCase().includes(searchTerm) ||
+      p.category.toLowerCase().includes(searchTerm) ||
+      p.section?.name?.toLowerCase().includes(searchTerm) ||
+      p.types?.name?.toLowerCase().includes(searchTerm);
+
+    return priceMatch && categoryMatch && ratingMatch && searchMatch;
+  });
+
+
+  // Update category filter when section/type in URL changes
+  useEffect(() => {
+    const updatedCategory = [];
+    if (selectedSection) updatedCategory.push(selectedSection);
+    if (selectedType) updatedCategory.push(selectedType);
+
+    setFilterData((prev) => ({
+      ...prev,
+      category: updatedCategory,
+    }));
+  }, [selectedSection, selectedType, location.search]);
+
+  // Handle filter checkbox/sort changes
+  function handleChange(e) {
+    const { checked, value, name } = e.target;
+    const val = name === "price" || name === "rating" ? Number(value) : value;
+
+    setFilterData((prev) => {
+      if (!Array.isArray(prev[name])) return { ...prev, [name]: val };
+      return {
+        ...prev,
+        [name]: checked
+          ? [...prev[name], val]
+          : prev[name].filter((v) => v !== val),
+      };
     });
+  }
 
-    console.log("filteredData:",filterData);
+  //  Sorting logic
+  const sortedProducts = [...locallyFiltered];
+  if (filterData.sort === "low-to-high") {
+    sortedProducts.sort((a, b) => a.price - b.price);
+  } else if (filterData.sort === "high-to-low") {
+    sortedProducts.sort((a, b) => b.price - a.price);
+  } else if (filterData.sort === "rating") {
+    sortedProducts.sort((a, b) => b.rating - a.rating);
+  } else if (filterData.sort === "new") {
+    sortedProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  } else if (filterData.sort === "best") {
+    sortedProducts.sort((a, b) =>
+      b.rating === a.rating ? b.price - a.price : b.rating - a.rating
+    );
+  }
 
-    const maxPrice = filterData.price.length ? Math.max(...filterData.price) : Infinity;
-    const locallyFiltered  = filteredProducts.filter(p => {
-        const priceMatch =
-            filterData.price.length === 0 ||
-            p.price <= maxPrice;
+  // Wishlist / Cart
+  function handleWishList(e, productId) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishList(productId);
+  }
 
-        const categoryMatch =
-            filterData.category.length === 0 ||
-            filterData.category.includes(p.category);
+  function handleCart(e, productId) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleCart(productId);
+  }
 
-        const ratingMatch =
-            filterData.rating.length === 0 ||
-            filterData.rating.some(r => p.rating >= r);
-
-        return priceMatch && categoryMatch && ratingMatch;
-});
-
-    function handleChange(e){
-        const { checked, value, name, type } = e.target;
-        const val = name === "price" || name === "rating" ? Number(value) : value;
-        
-        setFilterData(prev=>{
-            if (!Array.isArray(prev[name])) {
-                return { ...prev, [name]: val };
-                }
-            return {
-                ...prev,
-                [name]: checked ? [...prev[name], val]
-                : prev[name].filter(v => v !== val)
-                }
-            })
-    }
-
-
-   if (filterData.sort === "low-to-high") {
-      locallyFiltered.sort((a, b) => a.price - b.price);
-    } else if (filterData.sort === "high-to-low") {
-      locallyFiltered.sort((a, b) => b.price - a.price);
-    } else if (filterData.sort === "rating") {
-      locallyFiltered.sort((a, b) => b.rating - a.rating);
-    } else if (filterData.sort === "new") {
-      locallyFiltered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    } else if (filterData.sort === "best") {
-      locallyFiltered.sort((a, b) => {
-        if (b.rating === a.rating) return b.price - a.price;
-        return b.rating - a.rating;
-      });
-    }
-
-function handleWishList(e, productId){
-  e.preventDefault();
-  e.stopPropagation();
-  toggleWishList(productId);
-}
-
-function handleCart(e, productId){
-  e.preventDefault();
-  e.stopPropagation();
-  toggleCart(productId);
-}
-    
-    return(
-         <main className="container-fluid py-3">
+  return (
+    <main className="container-fluid py-3">
       <div className="row p-4">
         {/* ---------- FILTER SECTION ---------- */}
         <aside className="col-lg-3 mb-4">
@@ -88,15 +121,23 @@ function handleCart(e, productId){
             <h3 className="mb-0">Filters</h3>
             <button
               className="btn btn-warning btn-sm"
-              onClick={() =>
-                setFilterData({ price: [], category: [], rating: [], sort: "" })
-              }
+              onClick={() => {
+                const updatedCategory = [];
+                if (selectedSection) updatedCategory.push(selectedSection);
+                if (selectedType) updatedCategory.push(selectedType);
+                setFilterData({
+                  price: [],
+                  category: [],
+                  rating: [],
+                  sort: "",
+                });
+              }}
             >
               Clear
             </button>
           </div>
 
-          {/* Price */}
+          {/* Price Filter */}
           <div className="mb-3">
             <h5>Price</h5>
             {[250, 500, 1000, 2000, 200000].map((val, i) => (
@@ -114,16 +155,18 @@ function handleCart(e, productId){
             ))}
           </div>
 
-          {/* Category */}
+          {/* Category Filter */}
           <div className="mb-3">
             <h5>Category</h5>
-            {[
-              "Men's Fashion",
-              "Women's Fashion",
-              "Accessories",
-              "Footwear",
-              "Kids",
-            ].map((cat, i) => (
+            {Array.from(
+                new Set(
+                  filteredProducts.flatMap(p => [
+                    p.category,
+                    p.section?.name,
+                    p.types?.name
+                  ]).filter(Boolean) // remove undefined/null
+                )
+              ).map((cat, i) => (
               <label key={i} className="form-check-label d-block mb-1">
                 <input
                   name="category"
@@ -138,7 +181,7 @@ function handleCart(e, productId){
             ))}
           </div>
 
-          {/* Ratings */}
+          {/* Ratings Filter */}
           <div className="mb-3">
             <h5>Ratings</h5>
             {[4, 3, 2, 1].map((rate, i) => (
@@ -156,7 +199,7 @@ function handleCart(e, productId){
             ))}
           </div>
 
-          {/* Sort */}
+          {/* Sort Dropdown */}
           <div className="mb-3">
             <h5>Sort By</h5>
             <select
@@ -182,16 +225,14 @@ function handleCart(e, productId){
 
         {/* ---------- PRODUCT LIST SECTION ---------- */}
         <section className="col-lg-9">
-          {locallyFiltered.length > 0 ? (
+          {sortedProducts.length > 0 ? (
             <>
-              <h5 className="mb-4">
-                Products ({locallyFiltered.length})
-              </h5>
+              <h5 className="mb-4">Products ({sortedProducts.length})</h5>
               <div className="row g-3">
-                {locallyFiltered.map((item, index) => (
+                {sortedProducts.map((item) => (
                   <Link
                     to={`/product-detail/${item.id}`}
-                    key={index}
+                    key={item.id}
                     className="col-12 col-sm-6 col-md-4 text-decoration-none"
                   >
                     <div className="card h-100 border-0 shadow-sm rounded hover-shadow transition-all">
@@ -206,12 +247,8 @@ function handleCart(e, productId){
                       />
 
                       <div className="card-body">
-                        <h6 className="card-title text-dark text-truncate">
-                          {item.title}
-                        </h6>
-                        <p className="mb-1 text-muted small">
-                          {item.category}
-                        </p>
+                        <h6 className="card-title text-dark text-truncate">{item.title}</h6>
+                        <p className="mb-1 text-muted small">{item.category}</p>
                         <p className="mb-1 fw-semibold">₹{item.price}</p>
                         <p className="mb-1 small">⭐ {item.rating}</p>
                         <p
@@ -222,20 +259,14 @@ function handleCart(e, productId){
                           Stock: {item.stock}
                         </p>
 
-                        {/* Delivery Badge */}
                         <span
                           className={`badge ${
-                            item.price > 250
-                              ? "bg-success"
-                              : "bg-danger"
+                            item.price > 250 ? "bg-success" : "bg-danger"
                           } mb-2`}
                         >
-                          {item.price > 250
-                            ? "Free Delivery"
-                            : "Paid Delivery"}
+                          {item.price > 250 ? "Free Delivery" : "Paid Delivery"}
                         </span>
 
-                        {/* Buttons */}
                         <div className="d-flex flex-wrap gap-2 mt-2">
                           <button
                             className="btn btn-sm btn-outline-danger flex-fill"
@@ -264,5 +295,5 @@ function handleCart(e, productId){
         </section>
       </div>
     </main>
-    )
+  );
 }

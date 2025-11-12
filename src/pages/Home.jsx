@@ -26,7 +26,7 @@ export default function Home(){
                 <div className="row d-flex flex-nowrap justify-content-center g-2 my-2 p-3">
                         {sections && sections.map((sectionCard, index) => (
                             <Link 
-                                to={"/products"} 
+                                to={`/products?section=${encodeURIComponent(sectionCard)}`} 
                                 className="col text-center rounded-3 m-1 text-decoration-none text-dark"
                                 key={index}
                             >
@@ -64,7 +64,7 @@ export default function Home(){
                                                 key={index}
                                             >
                                             <Link 
-                                                to={"/products"} 
+                                                to={`/products`}
                                                 className="text-decoration-none text-dark w-100"
                                             >    
                                             <div  className="w-100"
@@ -106,7 +106,7 @@ export default function Home(){
                             }}>
                                 {types && types.map((typesCard, index) => (
                                     <Link 
-                                        to={"/products"} 
+                                        to={`/products?section=${encodeURIComponent(typesCard)}`}  
                                         key={index}
                                         className="flex-shrink-0 text-center text-decoration-none"
                                         style={{
