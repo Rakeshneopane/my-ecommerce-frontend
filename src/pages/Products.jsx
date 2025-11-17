@@ -1,299 +1,348 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useLocation, Link } from "react-router-dom";
 import { useProductContext } from "../contexts/productContext";
-import { Link, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export default function Products() {
+  const {
+    allProducts,
+    sectionTypeMap,
+    toggleWishList,
+    wishlist,
+    addToCart,
+  } = useProductContext();
+
   const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
 
-  const selectedSection = queryParams.get("section");
-  const selectedType = queryParams.get("type");
-  const { filteredProducts, toggleWishList, toggleCart } = useProductContext();
+  const query = new URLSearchParams(location.search);
+  const selectedSection = query.get("section");
+  const selectedType = query.get("type");
 
-  console.log("product: ", filteredProducts);
+  const sections = Object.keys(sectionTypeMap);
 
-  const initialCategory = [];
-  if (selectedSection) initialCategory.push(selectedSection);
-  if (selectedType) initialCategory.push(selectedType);
+  const [priceRange, setPriceRange] = useState([0, 200000]);
 
-  const [filterData, setFilterData] = useState({
+  const [filters, setFilters] = useState({
+    sections: [],
+    types: [],
     price: [],
-    category: initialCategory,
     rating: [],
     sort: "",
   });
 
-  console.log("filteredData:", filterData);
-
-  // Filtering logic
-  const maxPrice = filterData.price.length ? Math.max(...filterData.price) : Infinity;
-
-  const searchTerm = queryParams.get("search")?.toLowerCase() || "";
-
-  const locallyFiltered = filteredProducts.filter((p) => {
-    const priceMatch =
-      filterData.price.length === 0 || p.price <= maxPrice;
-
-    const categoryMatch =
-      filterData.category.length === 0 ||
-      filterData.category.includes(p.category) ||
-      filterData.category.includes(p.section?.name) ||
-      filterData.category.includes(p.types?.name);
-
-    const ratingMatch =
-      filterData.rating.length === 0 ||
-      filterData.rating.some((r) => p.rating >= r);
-
-    const searchMatch =
-      !searchTerm ||
-      p.title.toLowerCase().includes(searchTerm) ||
-      p.category.toLowerCase().includes(searchTerm) ||
-      p.section?.name?.toLowerCase().includes(searchTerm) ||
-      p.types?.name?.toLowerCase().includes(searchTerm);
-
-    return priceMatch && categoryMatch && ratingMatch && searchMatch;
-  });
-
-
-  // Update category filter when section/type in URL changes
-  useEffect(() => {
-    const updatedCategory = [];
-    if (selectedSection) updatedCategory.push(selectedSection);
-    if (selectedType) updatedCategory.push(selectedType);
-
-    setFilterData((prev) => ({
-      ...prev,
-      category: updatedCategory,
-    }));
-  }, [selectedSection, selectedType, location.search]);
-
-  // Handle filter checkbox/sort changes
-  function handleChange(e) {
-    const { checked, value, name } = e.target;
-    const val = name === "price" || name === "rating" ? Number(value) : value;
-
-    setFilterData((prev) => {
-      if (!Array.isArray(prev[name])) return { ...prev, [name]: val };
-      return {
-        ...prev,
-        [name]: checked
-          ? [...prev[name], val]
-          : prev[name].filter((v) => v !== val),
-      };
+  // ---------------- CLEAR ALL FILTERS ----------------
+  const clearFilters = () => {
+    setFilters({
+      sections: [],
+      types: [],
+      price: [],
+      rating: [],
+      sort: "",
     });
+
+    setPriceRange([0, 20000]);
+
+    window.history.replaceState({}, "", "/products");
+  };
+
+  // ---------------- UPDATE QUERY PARAMS ----------------
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (filters.sections.length)
+      params.set("section", filters.sections.join(","));
+
+    if (filters.types.length)
+      params.set("type", filters.types.join(","));
+
+    if (filters.sort) params.set("sort", filters.sort);
+
+    const queryString = params.toString();
+    window.history.replaceState({}, "", queryString ? `?${queryString}` : "");
+  }, [filters]);
+
+  // ---------------- APPLY INITIAL QUERY FILTERS ----------------
+  useEffect(() => {
+    const initialSections = selectedSection ? [selectedSection] : [];
+    const initialTypes = selectedType ? [selectedType] : [];
+
+    setFilters((prev) => ({
+      ...prev,
+      sections: initialSections,
+      types: initialTypes,
+    }));
+  }, [selectedSection, selectedType]);
+
+  // ---------------- HANDLE CHECKBOXES ----------------
+  const handleCheck = (e) => {
+    const { name, value, checked } = e.target;
+
+    const numericValue =
+      name === "price"
+        ? Number(value)
+        : name === "rating"
+        ? Number(value)
+        : value;
+
+    setFilters((prev) => ({
+      ...prev,
+      [name]: checked
+        ? [...prev[name], numericValue]
+        : prev[name].filter((v) => v !== numericValue),
+    }));
+  };
+
+  // ---------------- FILTER LOGIC ----------------
+  function match(p) {
+    if (filters.sections.length && !filters.sections.includes(p.sectionName))
+      return false;
+
+    if (filters.types.length && !filters.types.includes(p.typeName))
+      return false;
+
+    if (filters.price.length) {
+      const maxPrice = Math.max(...filters.price);
+      if (p.price > maxPrice) return false;
+    }
+
+    if (p.price > priceRange[1]) return false;
+
+    if (filters.rating.length) {
+      if (!filters.rating.some((r) => p.rating >= r)) return false;
+    }
+
+    return true;
   }
 
-  //  Sorting logic
-  const sortedProducts = [...locallyFiltered];
-  if (filterData.sort === "low-to-high") {
-    sortedProducts.sort((a, b) => a.price - b.price);
-  } else if (filterData.sort === "high-to-low") {
-    sortedProducts.sort((a, b) => b.price - a.price);
-  } else if (filterData.sort === "rating") {
-    sortedProducts.sort((a, b) => b.rating - a.rating);
-  } else if (filterData.sort === "new") {
-    sortedProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  } else if (filterData.sort === "best") {
-    sortedProducts.sort((a, b) =>
-      b.rating === a.rating ? b.price - a.price : b.rating - a.rating
-    );
+  // ---------------- SORT ----------------
+  function sortTheFiltered(products) {
+    let sorted = [...products];
+
+    switch (filters.sort) {
+      case "low-high":
+        return sorted.sort((a, b) => a.price - b.price);
+
+      case "high-low":
+        return sorted.sort((a, b) => b.price - a.price);
+
+      case "best-rated":
+        return sorted.sort((a, b) => b.rating - a.rating);
+
+      case "relevance":
+        return sorted.sort((a, b) => {
+          const scoreA =
+            (filters.sections.includes(a.sectionName) ? 1 : 0) +
+            (filters.types.includes(a.typeName) ? 1 : 0);
+
+          const scoreB =
+            (filters.sections.includes(b.sectionName) ? 1 : 0) +
+            (filters.types.includes(b.typeName) ? 1 : 0);
+
+          return scoreB - scoreA;
+        });
+
+      default:
+        return sorted;
+    }
   }
 
-  // Wishlist / Cart
-  function handleWishList(e, productId) {
+  let filtered = sortTheFiltered(allProducts.filter(match));
+
+  // ---------------- BUTTON HANDLERS ----------------
+  const handleWishList = (e, productId, title) => {
     e.preventDefault();
     e.stopPropagation();
+
+    const isNowInList = !wishlist.includes(productId);
     toggleWishList(productId);
-  }
 
-  function handleCart(e, productId) {
+    toast.info(`❤️ ${title} ${isNowInList ? "added to" : "removed from"} wishlist`);
+  };
+
+  const handleCart = (e, productId, title) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleCart(productId);
-  }
 
+    const product = allProducts.find((p) => p.id === productId);
+    if (!product) return;
+
+    addToCart(product, "Default", 1);
+
+    toast.success(`🛒 ${title} added to cart`);
+  };
+
+
+  console.log(filtered)
   return (
-    <main className="container-fluid py-3">
-      <div className="row p-4">
-        {/* ---------- FILTER SECTION ---------- */}
-        <aside className="col-lg-3 mb-4">
-          <div className="d-flex align-items-center justify-content-between mb-3">
-            <h3 className="mb-0">Filters</h3>
-            <button
-              className="btn btn-warning btn-sm"
-              onClick={() => {
-                const updatedCategory = [];
-                if (selectedSection) updatedCategory.push(selectedSection);
-                if (selectedType) updatedCategory.push(selectedType);
-                setFilterData({
-                  price: [],
-                  category: [],
-                  rating: [],
-                  sort: "",
-                });
-              }}
-            >
-              Clear
-            </button>
+    <div className="container py-4">
+      <div className="row">
+        {/* FILTERS */}
+        <aside className="col-md-3">
+          <div>
+          <div className="d-flex justify-content-between mb-3">
+            <span className="h4">Filters</span>
+            <span className="btn btn-sm btn-warning" onClick={clearFilters}>
+              Clear Filters 
+            </span>
           </div>
 
-          {/* Price Filter */}
-          <div className="mb-3">
-            <h5>Price</h5>
-            {[250, 500, 1000, 2000, 200000].map((val, i) => (
-              <label key={i} className="form-check-label d-block mb-1">
+          {/* SECTIONS */}
+          <h6 className="mt-3">Sections</h6>
+          {sections.map((sec) => (
+            <div key={sec}>
+              <input
+                className="form-check-input"
+                type="checkbox"
+                name="sections"
+                value={sec}
+                checked={filters.sections.includes(sec)}
+                onChange={handleCheck}
+              /> {" "}
+              <label className="form-check-label"> {sec}</label>
+            </div>
+          ))}
+
+          {/* TYPES */}
+          <h6 className="mt-3">Types</h6>
+          {sections.flatMap((sec) =>
+            sectionTypeMap[sec].types.map((t) => (
+              <div key={t.name}>
                 <input
-                  name="price"
+                  className="form-check-input"
                   type="checkbox"
-                  className="form-check-input me-2"
-                  value={val}
-                  onChange={handleChange}
-                  checked={filterData.price.includes(val)}
-                />
-                {val === 200000 ? "All" : `₹${val} and below`}
-              </label>
-            ))}
-          </div>
+                  name="types"
+                  value={t.name}
+                  checked={filters.types.includes(t.name)}
+                  onChange={handleCheck}
+                />{" "}
+                <label className="form-check-label"> {t.name}</label>
+              </div>
+            ))
+          )}
 
-          {/* Category Filter */}
-          <div className="mb-3">
-            <h5>Category</h5>
-            {Array.from(
-                new Set(
-                  filteredProducts.flatMap(p => [
-                    p.category,
-                    p.section?.name,
-                    p.types?.name
-                  ]).filter(Boolean) // remove undefined/null
-                )
-              ).map((cat, i) => (
-              <label key={i} className="form-check-label d-block mb-1">
-                <input
-                  name="category"
-                  type="checkbox"
-                  className="form-check-input me-2"
-                  value={cat}
-                  onChange={handleChange}
-                  checked={filterData.category.includes(cat)}
-                />
-                {cat}
-              </label>
-            ))}
-          </div>
+          {/* PRICE SLIDER */}
+          <h6 className="mt-3">Price Range</h6>
+          <input
+            
+            type="range"
+            min="0"
+            max="200000"
+            step="500"
+            value={priceRange[1]}
+            onChange={(e) => {
+              const newMax = Number(e.target.value);
+              setPriceRange([0, newMax]);
+              setFilters((prev) => ({ ...prev, price: [newMax] }));
+            }}
+          />
+          <p>Up to: ₹{priceRange[1]}</p>
 
-          {/* Ratings Filter */}
-          <div className="mb-3">
-            <h5>Ratings</h5>
-            {[4, 3, 2, 1].map((rate, i) => (
-              <label key={i} className="form-check-label d-block mb-1">
-                <input
-                  name="rating"
-                  type="checkbox"
-                  className="form-check-input me-2"
-                  value={rate}
-                  onChange={handleChange}
-                  checked={filterData.rating.includes(rate)}
-                />
-                {rate} stars & above
-              </label>
-            ))}
-          </div>
+          {/* QUICK PRICE FILTERS */}
+          <h6>Quick Price Filters</h6>
+          {[500, 2000, 5000, 10000].map((p) => (
+            <div key={p}>
+              <input
+                className="form-check-input"
+                type="checkbox"
+                name="price"
+                value={p}
+                checked={filters.price.includes(p)}
+                onChange={handleCheck}
+              /> {" "}
+              <label className="form-check-label">Up to ₹{p}</label>
+            </div>
+          ))}
 
-          {/* Sort Dropdown */}
-          <div className="mb-3">
-            <h5>Sort By</h5>
-            <select
-              id="sort"
-              className="form-select"
-              value={filterData.sort}
-              onChange={(e) =>
-                setFilterData((prev) => ({
-                  ...prev,
-                  sort: e.target.value,
-                }))
-              }
-            >
-              <option value="">Relevance</option>
-              <option value="low-to-high">Price: Low → High</option>
-              <option value="high-to-low">Price: High → Low</option>
-              <option value="rating">Avg. Customer Review</option>
-              <option value="new">Newest Arrivals</option>
-              <option value="best">Best Seller</option>
-            </select>
+          {/* RATING */}
+          <h6 className="mt-3">Rating</h6>
+          {[4, 3, 2, 1].map((r) => (
+            <div key={r}>
+              <input
+                className="form-check-input"
+                type="checkbox"
+                name="rating"
+                value={r}
+                checked={filters.rating.includes(r)}
+                onChange={handleCheck}
+              />{" "}
+              <label className="form-check-label">{r} ⭐ & above</label>
+            </div>
+          ))}
+
+          {/* SORT */}
+          <h6 className="mt-3">Sort</h6>
+          <select
+            name="sort"
+            value={filters.sort}
+            className="form-select"
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, sort: e.target.value }))
+            }
+          >
+            <option value="">All</option>
+            <option value="low-high">Low to high</option>
+            <option value="high-low">High to low</option>
+            <option value="relevance">Relevance</option>
+            <option value="best-rated">Best Rated</option>
+          </select>
           </div>
         </aside>
 
-        {/* ---------- PRODUCT LIST SECTION ---------- */}
-        <section className="col-lg-9">
-          {sortedProducts.length > 0 ? (
-            <>
-              <h5 className="mb-4">Products ({sortedProducts.length})</h5>
-              <div className="row g-3">
-                {sortedProducts.map((item) => (
-                  <Link
-                    to={`/product-detail/${item.id}`}
-                    key={item.id}
-                    className="col-12 col-sm-6 col-md-4 text-decoration-none"
-                  >
-                    <div className="card h-100 border-0 shadow-sm rounded hover-shadow transition-all">
-                      <img
-                        src={
-                          item.images?.[0] ||
-                          "https://placehold.co/400x400?text=No+Image"
-                        }
-                        alt={item.title}
-                        className="card-img-top rounded-top"
-                        style={{ objectFit: "cover", height: "250px" }}
-                      />
+        {/* PRODUCT GRID */}
+        <section className="col-md-9">
+          <h3>
+            {filtered.length === 1 ? "Product" : "Products"} ({filtered.length})
+          </h3>
 
-                      <div className="card-body">
-                        <h6 className="card-title text-dark text-truncate">{item.title}</h6>
-                        <p className="mb-1 text-muted small">{item.category}</p>
-                        <p className="mb-1 fw-semibold">₹{item.price}</p>
-                        <p className="mb-1 small">⭐ {item.rating}</p>
-                        <p
-                          className={`small ${
-                            parseInt(item.stock) < 5 ? "text-danger" : "text-muted"
+          <div className="row my-2">
+            {filtered.map((p) => (
+              <div key={p.id} className="col-6 col-md-4 col-lg-3 my-2">
+                <Link
+                  to={`/product-detail/${p.id}`}
+                  className="text-decoration-none"
+                >
+                  <div className="card">
+                    <img
+                      src={p.images[0]}
+                      style={{ height: "200px", objectFit: "cover" }}
+                    />
+
+                    <div className="card-body">
+                      <p className="fw-bold">{p.title}</p>
+                      <span>{p.category}</span> {" "}|{" "}
+                      <span>{p.sectionName || "No section metioned"}</span>{" "}|{" "}
+                      <span>{ p.typesName || "No type metioned"}</span>
+                      <p><b>₹{p.price}</b></p>
+                      <p>⭐ {p.rating}</p>
+                     {p.price > 1000 ?  <p className="badge rounded-pill text-bg-success"> Free Delivery</p>: <p className="badge rounded-pill text-bg-danger"> Paid Delivery</p> }
+
+                      <div className="d-flex justify-content-center gap-2">
+                        <button
+                          className="btn btn-sm btn-outline-warning"
+                          onClick={(e) =>
+                            handleCart(e, p.id, p.title, p.isInCart)
+                          }
+                        >
+                          🛒
+                        </button>
+
+                        <button
+                          className={`btn btn-sm ${
+                            wishlist.includes(p.id) ? "btn-danger" : "btn-outline-danger"
                           }`}
+                          onClick={(e) => handleWishList(e, p.id, p.title)}
                         >
-                          Stock: {item.stock}
-                        </p>
-
-                        <span
-                          className={`badge ${
-                            item.price > 250 ? "bg-success" : "bg-danger"
-                          } mb-2`}
-                        >
-                          {item.price > 250 ? "Free Delivery" : "Paid Delivery"}
-                        </span>
-
-                        <div className="d-flex flex-wrap gap-2 mt-2">
-                          <button
-                            className="btn btn-sm btn-outline-danger flex-fill"
-                            onClick={(e) => handleWishList(e, item.id)}
-                          >
-                            ❤️ Wishlist
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-warning flex-fill"
-                            onClick={(e) => handleCart(e, item.id)}
-                          >
-                            🛒 Add to Cart
-                          </button>
-                        </div>
+                          ❤️
+                        </button>
                       </div>
                     </div>
-                  </Link>
-                ))}
+                  </div>
+                </Link>
               </div>
-            </>
-          ) : (
-            <div className="text-center p-5 text-muted">
-              <h5>No products found.</h5>
-            </div>
-          )}
+            ))}
+          </div>
         </section>
       </div>
-    </main>
+    </div>
   );
 }

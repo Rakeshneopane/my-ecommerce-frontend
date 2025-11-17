@@ -1,153 +1,172 @@
-// src/contexts/productContext.jsx
-import { useState, useEffect, createContext, useContext } from "react";
+// src/contexts/ProductContext.jsx
+import { createContext, useContext, useEffect, useState } from "react";
 import { useFetch } from "../useFetch";
 
 const ProductContext = createContext();
 export const useProductContext = () => useContext(ProductContext);
 
 export default function ProductProvider({ children }) {
-  const API_BASE = import.meta.env.VITE_BASE_URI || "https://my-ecommerce-eta-ruby.vercel.app";
+  const API = import.meta.env.VITE_BASE_URI;
 
-  // 🧩 Local state
+  // FETCH DATA
+  const { data: productRes } = useFetch(`${API}/api/products`, { data: [] });
+  const { data: sectionRes } = useFetch(`${API}/sections`, { sections: [] });
+  const { data: typeRes } = useFetch(`${API}/types`, { types: [] });
+
   const [products, setProducts] = useState([]);
-  const [filters, setFilters] = useState({ type: "", section: "" });
   const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  // 🧩 Fetch from backend (manual, replacing useFetch)
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${API_BASE}/api/products`);
-      if (!res.ok) throw new Error(`Failed to fetch products (${res.status})`);
-      const json = await res.json();
-      console.log("Fetched raw productsData:", json);
-      const list = Array.isArray(json.data) ? json.data : [];
-
-      // Merge with localStorage
-      const saved = JSON.parse(localStorage.getItem("products")) || [];
-      const merged = list.map((prod) => {
-        const normalized = {
-          ...prod,
-          id: prod.id || prod._id,
-          images:
-            Array.isArray(prod.images) && prod.images.length > 0
-              ? prod.images
-              : ["https://placehold.co/400x400?text=No+Image"],
-        };
-
-        const savedProd = saved.find((p) => p.id === normalized.id);
-        return savedProd
-          ? { ...normalized, ...savedProd }
-          : { ...normalized, isOnWishList: false, isInCart: false };
-      });
-
-      console.log("Final merged products:", merged);
-      setProducts(merged);
-      setError(null);
-    } catch (err) {
-      console.error("Error fetching products:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 🧩 Refresh helper (to call from anywhere)
-  const refreshProducts = () => fetchProducts();
-
-  // Initial load
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  // Save product meta (wishlist/cart/qty) to localStorage
-  useEffect(() => {
-    if (!products.length) return;
-    const minimal = products.map((p) => ({
-      id: p.id,
-      isOnWishList: p.isOnWishList,
-      isInCart: p.isInCart,
-      quantity: p.quantity || 1,
-    }));
-    localStorage.setItem("products", JSON.stringify(minimal));
-  }, [products]);
-
-  // Filters and search
-  const filteredProducts = products.filter((p) => {
-    const matchesFilter =
-      (!filters.type || p.type?.id === filters.type) &&
-      (!filters.section || p.section?.id === filters.section);
-    const matchesSearch =
-      searchTerm === "" ||
-      p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.category.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesFilter && matchesSearch;
+  // CART ARRAY (single source of truth)
+  const [cartItems, setCartItems] = useState(() => {
+    return JSON.parse(localStorage.getItem("cartItems")) || [];
+  });
+  // WISH LIST
+  const [wishlist, setWishlist] = useState(() => {
+    return JSON.parse(localStorage.getItem("wishlist")) || [];
   });
 
-  // Wishlist / cart handlers
-  function toggleWishList(id) {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, isOnWishList: !p.isOnWishList } : p
+
+  // LOAD PRODUCTS FROM SERVER
+  useEffect(() => {
+    if (!productRes?.data) return;
+
+    const normalized = productRes.data.map((p) => ({
+      ...p,
+      id: p._id,
+      sectionName: p.section?.name || null,
+      typeName: p.types?.name || null,
+      images: p.images?.length ? p.images : ["https://placehold.co/400"],
+    }));
+
+    setProducts(normalized);
+  }, [productRes]);
+
+  // SAVE CART
+  useEffect(() => {
+    localStorage.setItem("cartItems", JSON.stringify(cartItems));
+  }, [cartItems]);
+
+  // SAVE WISH LIST
+  useEffect(() => {
+    localStorage.setItem("wishlist", JSON.stringify(wishlist));
+  }, [wishlist]);
+
+  // SEARCH FILTER
+  const searchedProducts = products.filter((p) =>
+    p.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // WISHLIST
+  const toggleWishList = (productId) => {
+    setWishlist((prev) => {
+    if (prev.includes(productId)) {
+      return prev.filter(id => id !== productId);
+    }
+    return [...prev, productId];
+  });
+  };
+
+  // ADD TO CART 
+  const addToCart = (product, size, qty = 1) => {
+    if (!size) return;
+
+    setCartItems((prev) => {
+      const existing = prev.find(
+        (item) => item.productId === product.id && item.size === size
+      );
+
+      // If already in cart → increase quantity by qty
+      if (existing) {
+        return prev.map((item) =>
+          item.productId === product.id && item.size === size
+            ? { ...item, quantity: item.quantity + qty }
+            : item
+        );
+      }
+
+      // New entry → add with qty
+      return [
+        ...prev,
+        {
+          productId: product.id,
+          title: product.title,
+          price: product.price,
+          image: product.images?.[0],
+          size,
+          quantity: qty,
+        },
+      ];
+    });
+  };
+
+  // CHANGE CART ITEM QUANTITY
+  const changeCartQuantity = (productId, size, amount) => {
+    setCartItems((prev) =>
+      prev
+        .map((item) => {
+          if (item.productId === productId && item.size === size) {
+            const newQty = item.quantity + amount;
+            return { ...item, quantity: newQty < 1 ? 1 : newQty };
+          }
+          return item;
+        })
+    );
+  };
+
+  // REMOVE CART ITEM
+  const removeCartItem = (productId, size) => {
+    setCartItems((prev) =>
+      prev.filter(
+        (item) => !(item.productId === productId && item.size === size)
       )
     );
-  }
+  };
 
-  function toggleCart(id) {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, isInCart: !p.isInCart } : p
-      )
-    );
-  }
+  // SECTION-TYPE MAP
+  const [sectionTypeMap, setSectionTypeMap] = useState({});
 
-  function changeQuantity(id, delta) {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === id
-          ? { ...p, quantity: Math.max(1, (p.quantity || 1) + delta) }
-          : p
-      )
-    );
-  }
+  useEffect(() => {
+    if (!sectionRes.sections || !typeRes.types) return;
 
-  // Loading/error UI
-  if (loading)
-    return (
-      <div className="d-flex flex-column justify-content-center align-items-center vh-100 text-dark">
-        <div
-          className="spinner-border text-dark mb-3"
-          role="status"
-          style={{ width: "3rem", height: "3rem" }}
-        ></div>
-        <h4>Loading products...</h4>
-      </div>
-    );
+    const map = {};
+    sectionRes.sections.forEach((s) => {
+      map[s.name] = {
+        image: s.images?.[0] || "",
+        types: [],
+      };
+    });
 
-  if (error)
-    return (
-      <div className="d-flex flex-column justify-content-center align-items-center vh-100 text-danger">
-        <i className="bi bi-exclamation-octagon display-4 mb-3"></i>
-        <h4>Something went wrong!</h4>
-        <p className="text-secondary">{error}</p>
-      </div>
-    );
+    typeRes.types.forEach((t) => {
+      const sec = sectionRes.sections.find((s) => s._id === t.section);
+      if (sec) {
+        map[sec.name].types.push({
+          name: t.name,
+          image: t.images?.[0],
+        });
+      }
+    });
+
+    setSectionTypeMap(map);
+  }, [sectionRes, typeRes]);
 
   return (
     <ProductContext.Provider
       value={{
-        products,
-        filteredProducts,
-        filters,
-        setFilters,
+        products: searchedProducts,
+        allProducts: products,
+        sectionTypeMap,
         searchTerm,
         setSearchTerm,
+
+        // wishlist
+        wishlist,
         toggleWishList,
-        toggleCart,
-        changeQuantity,
-        refreshProducts, 
+
+        // cart
+        cartItems,
+        addToCart,
+        changeCartQuantity,
+        removeCartItem,
       }}
     >
       {children}

@@ -3,8 +3,8 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function WishList() {
-  const { products, toggleWishList, toggleCart } = useProductContext();
-  const wishListItems = products.filter(p => p.isOnWishList);
+  const { products, wishlist, toggleWishList, addToCart } = useProductContext();
+  const wishListItems = products.filter(p => wishlist.includes(p.id));
 
   // handlers with toasts
   const handleRemove = (id, title) => {
@@ -12,9 +12,11 @@ export default function WishList() {
     toast.info(`❌ Removed "${title}" from wishlist`);
   };
 
-  const handleAddToCart = (id, title) => {
-    toggleCart(id);
-    toast.success(`🛒 Added "${title}" to cart`);
+  const handleAddToCart = (product) => {
+    const size = "Default";
+
+    addToCart(product, size, 1);  // <-- ADD TO CART
+    toast.success(`🛒 Added "${product.title}" to cart`);
   };
 
   return (
@@ -61,7 +63,7 @@ export default function WishList() {
                   </button>
                   <button
                     className="btn btn-warning w-50"
-                    onClick={() => handleAddToCart(product.id, product.title)}
+                    onClick={() => handleAddToCart(product)}
                   >
                     🛒 Add to Cart
                   </button>

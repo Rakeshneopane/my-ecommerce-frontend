@@ -118,7 +118,13 @@ export default function CreateProduct() {
       // store them for display
       setRecentlyAdded((prev) => [...prev, ...newProducts]);
 
-      setSuccess(`✅ Added ${addedCount + newProducts.length} product(s) so far.`);
+      if (isEdit) {
+        setSuccess("✅ Product updated successfully.");
+        } else {
+          setAddedCount((prev) => prev + newProducts.length);
+          setRecentlyAdded((prev) => [...prev, ...newProducts]);
+          setSuccess(`✅ Added ${addedCount + newProducts.length} product(s) so far.`);
+      }
 
       // clear form for next entry
       setFormData({
@@ -148,8 +154,7 @@ export default function CreateProduct() {
 
       <form onSubmit={handleSubmit} className="p-4 border rounded shadow-sm bg-light">
         {fetching && <p>Loading product data...</p>}
-        {error && <div className="alert alert-danger">{error}</div>}
-        {success && <div className="alert alert-success">{success}</div>}
+        
 
         {/* Product Form */}
         <div className="mb-3">
@@ -257,7 +262,7 @@ export default function CreateProduct() {
           />
         </div>
 
-        <button type="submit" className="btn btn-success w-100 mt-3" disabled={loading}>
+        <button type="submit" className="btn btn-success w-100 mt-3 mb-2" disabled={loading}>
           {loading
             ? isEdit
               ? "Updating..."
@@ -266,6 +271,8 @@ export default function CreateProduct() {
             ? "Update Product"
             : "Create Product"}
         </button>
+        {error && <div className="alert alert-danger mx-2">{error}</div>}
+        {success && <div className="alert alert-success mx-2">{success}</div>}
       </form>
 
       {/* 🧩 Summary & recently added list */}

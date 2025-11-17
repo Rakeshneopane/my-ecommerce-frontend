@@ -1,49 +1,106 @@
 import { useState, useEffect } from "react";
 import { useProductContext } from "../contexts/productContext";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate  } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function ProductDetails() {
-  const { products, changeQuantity, toggleWishList, toggleCart } = useProductContext();
-  const { productId } = useParams();
+  const {
+    products,
+    wishlist,
+    addToCart,
+    toggleWishList,
+  } = useProductContext();
 
+  const { productId } = useParams();
+  const navigate = useNavigate();
+
+  // Single product
   const product = products?.find((p) => p.id?.toString() === productId);
 
+  // Local states
   const [selectedSize, setSelectedSize] = useState(null);
+  const [qty, setQty] = useState(1);
   const [mainImage, setMainImage] = useState(product?.images?.[0]);
 
+  // Freeze related items
+  const [relatedItems, setRelatedItems] = useState([]);
+
   useEffect(() => {
+    // Reset when switching to a NEW product
     setSelectedSize(null);
+    setQty(1);
     setMainImage(product?.images?.[0]);
+
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [productId, product]);
+
+    // Generate a consistent 4-item random related list
+    const r = products
+      .filter((p) => p.id !== product.id)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 4);
+
+    setRelatedItems(r);
+
+  }, [productId]);
 
   if (!product) return <p>Loading...</p>;
 
   const sizes = ["S", "M", "L", "XL", "XXL"];
 
+  // -------------------
+  // WISHLIST
+  // -------------------
   const handleWishList = (e, productId, title) => {
     e.preventDefault();
     e.stopPropagation();
+
     toggleWishList(productId);
-    toast.info(`❤️ ${title} ${product.isOnWishList ? "removed from" : "added to"} wishlist`);
+    toast.info(
+      `❤️ ${title} ${product.isOnWishList ? "removed from" : "added to"} wishlist`
+    );
   };
 
-  const handleCart = (e, productId, title) => {
+  // -------------------
+  // ADD TO CART
+  // -------------------
+  const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleCart(productId);
-    toast.success(`🛒 ${title} added to cart`);
+
+    if (!selectedSize) {
+      toast.warning("⚠️ Please select a size.");
+      return;
+    }
+
+    addToCart(product, selectedSize, qty); 
+    toast.success(`🛒 ${product.title} added to cart`);
+  };
+
+  // -------------------
+  // BUY NOW
+  // -------------------
+  const handleBuyNow = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!selectedSize) {
+      toast.warning("⚠️ Please select a size first.");
+      return;
+    }
+
+    addToCart(product, selectedSize, qty);
+
+    navigate("/cart");
   };
 
   return (
     <div className="container bg-light py-4 my-3 rounded shadow-sm">
-      {/* Toast Notifications */}
       <ToastContainer position="top-center" autoClose={2000} hideProgressBar />
 
       <div className="row align-items-start">
-        {/* LEFT SIDE: Images + Buttons */}
+
+        {/* LEFT SIDE */}
         <div className="col-md-5 text-center">
           <img
             src={mainImage || "https://placehold.co/400x400?text=No+Image"}
@@ -58,8 +115,10 @@ export default function ProductDetails() {
               <img
                 key={index}
                 src={img}
-                alt={`thumb-${index}`}
-                className={`border rounded ${mainImage === img ? "border-primary" : ""}`}
+                alt="thumb"
+                className={`border rounded ${
+                  mainImage === img ? "border-primary" : ""
+                }`}
                 style={{
                   width: "70px",
                   height: "70px",
@@ -73,36 +132,42 @@ export default function ProductDetails() {
 
           {/* Action Buttons */}
           <div className="d-flex justify-content-center gap-3 mt-3">
-            <button className="btn btn-primary px-4">Buy Now</button>
+            <button
+              className="btn btn-primary px-4"
+              onClick={handleBuyNow}
+            >
+              Buy Now
+            </button>
+
             <button
               className="btn btn-outline-warning px-4"
-              onClick={(e) => handleCart(e, product.id, product.title)}
+              onClick={handleAddToCart}
             >
               🛒 Add to Cart
             </button>
           </div>
         </div>
 
-        {/* RIGHT SIDE: Details */}
+        {/* RIGHT SIDE */}
         <div className="col-md-7">
           <h2>{product.title}</h2>
           <p><strong>Rating:</strong> ⭐ {product.rating}</p>
           <p><strong>Price:</strong> ₹{product.price}</p>
           <p><strong>Discount:</strong> 10% off</p>
 
-          {/* Quantity Controller */}
+          {/* Quantity */}
           <div className="my-3">
             <strong>Quantity: </strong>
             <button
               className="btn btn-sm btn-outline-secondary mx-2"
-              onClick={() => changeQuantity(product.id, -1)}
+              onClick={() => setQty((q) => (q > 1 ? q - 1 : 1))}
             >
               -
             </button>
-            <span>{product.quantity || 1}</span>
+            <span>{qty}</span>
             <button
               className="btn btn-sm btn-outline-secondary mx-2"
-              onClick={() => changeQuantity(product.id, 1)}
+              onClick={() => setQty((q) => q + 1)}
             >
               +
             </button>
@@ -116,7 +181,9 @@ export default function ProductDetails() {
                 <button
                   key={size}
                   className={`btn btn-sm ${
-                    selectedSize === size ? "btn-primary" : "btn-outline-primary"
+                    selectedSize === size
+                      ? "btn-primary"
+                      : "btn-outline-primary"
                   }`}
                   onClick={() => setSelectedSize(size)}
                 >
@@ -136,49 +203,71 @@ export default function ProductDetails() {
         </div>
       </div>
 
-      {/* Related Products */}
+      {/* RELATED PRODUCTS */}
       <hr className="my-4" />
-      <p className="fs-5 mb-3">You may also like these</p>
+      <p className="fs-5 mb-3">You may also like</p>
 
       <div className="row">
-        {products.map((p) => (
+        {relatedItems.map((p) => (
           <div
             key={p.id}
             className="col-12 col-sm-6 col-md-4 col-lg-3 my-2 d-flex justify-content-center"
           >
+            <div className="card shadow-sm border-0" style={{ width: "100%", maxWidth: "250px" }}>
             <Link
               to={`/product-detail/${p.id}`}
               className="card text-decoration-none text-dark shadow-sm border-0"
               style={{ width: "100%", maxWidth: "250px" }}
             >
               <img
-                src={p.images?.[0] || "https://placehold.co/250x250?text=No+Image"}
+                src={p.images?.[0] || "https://placehold.co/250"}
                 alt={p.title}
                 className="card-img-top rounded-top"
                 style={{ objectFit: "cover", height: "200px" }}
               />
-              <div className="card-body text-center">
-                <h6 className="card-title mb-1">{p.title}</h6>
-                <p className="text-muted small mb-2">₹{p.price}</p>
-                <div className="d-flex justify-content-center gap-2">
-                  <button
-                    className="btn btn-sm btn-outline-warning"
-                    onClick={(e) => handleCart(e, p.id, p.title)}
-                  >
-                    🛒
-                  </button>
-                  <button
-                    className="btn btn-sm btn-outline-danger"
-                    onClick={(e) => handleWishList(e, p.id, p.title)}
-                  >
-                    ❤️
-                  </button>
-                </div>
-              </div>
             </Link>
+            
+                <div className="card-body text-center">
+                  <h6 className="card-title">{p.title}</h6>
+                  <p className="text-muted mb-1">₹{p.price}</p>
+                  <div className="d-flex justify-content-center gap-2">
+
+                    {/* Add to cart (default size) */}
+                    <button
+                      className="btn btn-sm btn-outline-warning"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        addToCart(p, "Default", 1);
+                        toast.success(`🛒 Added ${p.title} to cart`);
+                      }}
+                    >
+                      🛒
+                    </button>
+
+                    {/* Wishlist */}
+                    <button
+                      className={`btn btn-sm ${
+                        wishlist.includes(p.id) ? "btn-danger" : "btn-outline-danger"
+                      }`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleWishList(p.id);
+                        const isNowIn = !wishlist.includes(p.id);
+                        toast.info(`❤️ ${p.title} ${isNowIn ? "added" : "removed"} from wishlist`);
+                      }}
+                    >
+                      ❤️
+                    </button>
+
+                  </div>
+              </div>
+            </div>
           </div>
         ))}
       </div>
+
     </div>
   );
 }

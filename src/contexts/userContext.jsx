@@ -1,18 +1,20 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
 const UserContext = createContext();
+export const useUserContext = () => useContext(UserContext);
 
 export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
-  // Load user from localStorage when app starts
+
+  // Load user from localStorage on app start
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      setUser(JSON.parse(stored));
     }
   }, []);
 
-  // Save to localStorage whenever user changes
+  // Persist user to localStorage when changed
   useEffect(() => {
     if (user) {
       localStorage.setItem("user", JSON.stringify(user));
@@ -21,16 +23,16 @@ export function UserProvider({ children }) {
     }
   }, [user]);
 
-  // Update user data (used after signup/login/update)
+  // Save user after login or signup
   const saveUser = (userData) => {
-        setUser(userData);
-        localStorage.setItem("user", JSON.stringify(userData)); // persist
-      };
+    setUser(userData);
+  };
 
-  // Logout handler
+  // Logout
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
+    localStorage.removeItem("userId");
   };
 
   return (
@@ -39,5 +41,3 @@ export function UserProvider({ children }) {
     </UserContext.Provider>
   );
 }
-
-export const useUserContext = () => useContext(UserContext);

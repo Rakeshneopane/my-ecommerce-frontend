@@ -72,6 +72,7 @@ export default function AddressManagement(){
     }
 
     return(
+        <>
         <div className="container">
             <div className="card p-3 my-4">
                 <div className="form">
@@ -177,6 +178,8 @@ export default function AddressManagement(){
                     {error && <p>{error}</p>}
                 </div>
             </div>
+            
         </div>
+        </>
     )
 }

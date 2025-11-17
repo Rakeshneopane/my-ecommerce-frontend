@@ -16,10 +16,13 @@ import UserProfile from './pages/UserProfile';
 import CreateProduct from './admin/createProduct';
 import AdminDashboard from './admin/adminDashboard';
 
+import UpdateSectionImage from "./admin/updateSection";
+import Login from "./pages/LoginPage";
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import './App.css';
-
+import { ToastContainer } from "react-toastify";
 
 function App() {
   return (
@@ -28,20 +31,23 @@ function App() {
         <UserProvider>
            <div className="d-flex flex-column min-vh-100 bg-success-subtle">
             <Header />
-             <main className="flex-grow-1">
-            <Routes>
-              <Route path="/" element={<Home />}> </Route>
-              <Route path="/home" element={<Home />}> </Route>
-              <Route path="/products" element={<Products />}> </Route>
-              <Route path="/product-detail/:productId" element={<ProductDetails />}> </Route>
-              <Route path="/wish-list" element={<WishList />}></Route>
-              <Route path="/cart" element={<Cart />}></Route>
-              <Route path="/user" element={<UserProfile />}></Route>
-              <Route path="/address" element={<AddressManagement />}></Route>
-              <Route path="/admin/create-product" element={<CreateProduct />}></Route>
-              <Route path="/admin/edit-product/:productId" element={<CreateProduct />}></Route>
-              <Route path="/admin" element={<AdminDashboard />} />
-            </Routes>
+            <ToastContainer position="top-center" autoClose={2000} />
+            <main className="flex-grow-1">
+              <Routes>
+                <Route path="/" element={<Home />}> </Route>
+                <Route path="/home" element={<Home />}> </Route>
+                <Route path="/products" element={<Products />}> </Route>
+                <Route path="/product-detail/:productId" element={<ProductDetails />}> </Route>
+                <Route path="/wish-list" element={<WishList />}></Route>
+                <Route path="/cart" element={<Cart />}></Route>
+                <Route path="/user" element={<UserProfile />}></Route>
+                <Route path="/address" element={<AddressManagement />}></Route>
+                <Route path="/admin/create-product" element={<CreateProduct />}></Route>
+                <Route path="/admin/edit-product/:productId" element={<CreateProduct />}></Route>
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/update-section-image" element={<UpdateSectionImage />} />
+              </Routes>
             </main>
             
             <Footer />

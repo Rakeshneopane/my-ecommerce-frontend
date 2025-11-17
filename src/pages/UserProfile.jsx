@@ -3,10 +3,11 @@ import {useState, useEffect} from "react";
 import { Link } from 'react-router-dom';
 
 export default function UserProfile (){
-    const { user, saveUser } = useUserContext();
+    const { user, saveUser,logout } = useUserContext();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
+
     const [formData, setFormData] = useState({
         name: "",
         surname: "",
@@ -57,8 +58,31 @@ export default function UserProfile (){
         } finally{setLoading(false)}
     }
     return(
+        <>
         <div className="container card p-3 my-4">
-            <div className="form">
+        { user && (
+            <div className="">
+                <div className="card p-2 my-2">
+                    <p>Account user: {user.name} {user.surname}</p>
+                    <p>Gender: {user.gender}</p>      
+                    <p>Email: {user.email}</p>  
+                    <p>Phone: {user.phone}</p>
+                    </div>
+                <div className="card p-2 m-2">
+                        {user.addresses.map((address, index)=>(
+                            <div key={index}>
+                                <p>Area: {address.area}</p>
+                                <p>City: {address.city}</p>
+                                <p>State: {address.state}</p>
+                                <p>Pin: {address.pincode}</p>
+                                {address?.type && <p>Address Type: {address.type}</p>}
+                            </div>
+                        ))}
+                    </div>
+            </div>
+        ) }
+        
+           { !user && <div className="form">
             <form action="" onSubmit={(e)=>handleSubmit(e)}>
                 <label htmlFor="" className="form-label">
                     <p> Personal Information </p> 
@@ -136,11 +160,13 @@ export default function UserProfile (){
             </form>
             {success && <p className="success">{success}</p>}
             {error && <p className="error">{error}</p>}
-            </div>
+            </div>}
             <br />
             <div>
                 <Link to="/address" className="btn btn-primary">Add Address</Link>                   
             </div>
+        
         </div>
+        </>
     )
 }
