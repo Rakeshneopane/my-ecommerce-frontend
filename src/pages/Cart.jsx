@@ -8,6 +8,7 @@ export default function Cart() {
     cartItems,
     removeCartItem,
     changeCartQuantity,
+    toggleWishList,
   } = useProductContext();
 
   const [loading, setLoading] = useState(false);
@@ -157,6 +158,16 @@ export default function Cart() {
                       className="btn btn-sm btn-outline-danger"
                     >
                       Remove
+                    </button>{" "}
+                    <button
+                      onClick={() =>{
+                        toggleWishList(item.productId);
+                        handleRemove(item.productId, item.size, item.title);
+                      }
+                    }
+                      className="btn btn-sm btn-outline-warning"
+                    >
+                      ❤️ Move to WishList
                     </button>
                   </div>
                 </div>

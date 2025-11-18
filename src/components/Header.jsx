@@ -2,9 +2,11 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useProductContext } from "../contexts/productContext";
+import { useUserContext } from "../contexts/userContext";
 
 export default function Header() {
   const { products, setSearchTerm, cartItems,wishlist } = useProductContext();
+  const { user, logout } = useUserContext();
 
   const [showNav, setShowNav] = useState(false);
   const [searchInput, setSearchInput] = useState("");
@@ -19,8 +21,12 @@ export default function Header() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const query = params.get("search") || "";
-    setSearchInput(query);
-    setSearchTerm(query);
+
+    // Only update if URL changed externally
+    if (query !== searchInput) {
+      setSearchInput(query);
+      setSearchTerm(query);
+    }
   }, [location.search]);
 
   const handleSearchChange = (e) => {
@@ -81,14 +87,14 @@ export default function Header() {
                 {/* WISHLIST */}
                 <li className="nav-item">
                   <Link to="/wish-list" className="nav-link">
-                    Wish List {wishCount ? `(${wishCount})` : ""}
+                    ❤️{wishCount ? `(${wishCount})` : ""}
                   </Link>
                 </li>
 
                 {/* CART */}
                 <li className="nav-item">
                   <Link to="/cart" className="nav-link">
-                    Cart {cartCount ? `(${cartCount})` : ""}
+                    🛒 {cartCount ? `(${cartCount})` : ""}
                   </Link>
                 </li>
 
@@ -97,6 +103,27 @@ export default function Header() {
                   <Link to="/user" className="nav-link">
                     Account
                   </Link>
+                </li>
+
+                {/* LOGIN / LOGOUT */}
+                <li className="nav-item">
+                  {!user ? (
+                    <Link to="/login" className="nav-link">
+                      Login
+                    </Link>
+                  ) : (
+                    <button
+                      className="btn btn-link nav-link"
+                      onClick={() => {
+                        logout();
+                        localStorage.removeItem("userId");
+                        navigate("/login");
+                      }}
+                      style={{ textDecoration: "none" }}
+                    >
+                      Logout
+                    </button>
+                  )}
                 </li>
 
                 {/* ADMIN */}

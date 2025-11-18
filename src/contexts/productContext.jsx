@@ -52,9 +52,12 @@ export default function ProductProvider({ children }) {
   }, [wishlist]);
 
   // SEARCH FILTER
-  const searchedProducts = products.filter((p) =>
-    p.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const searchedProducts = searchTerm
+    ? products.filter((p) =>
+        p.title.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : products;
+
 
   // WISHLIST
   const toggleWishList = (productId) => {

@@ -16,7 +16,8 @@ import UserProfile from './pages/UserProfile';
 import CreateProduct from './admin/createProduct';
 import AdminDashboard from './admin/adminDashboard';
 
-import UpdateSectionImage from "./admin/updateSection";
+import UpdateSection from "./admin/updateSection";
+import UpdateTypes from "./admin/updateTypes";
 import Login from "./pages/LoginPage";
 
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -46,7 +47,8 @@ function App() {
                 <Route path="/admin/edit-product/:productId" element={<CreateProduct />}></Route>
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/update-section-image" element={<UpdateSectionImage />} />
+                <Route path="/update-sections" element={<UpdateSection />} />
+                <Route path="/update-types" element={<UpdateTypes />} />
               </Routes>
             </main>
             

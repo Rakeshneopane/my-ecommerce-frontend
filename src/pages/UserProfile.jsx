@@ -165,7 +165,17 @@ export default function UserProfile (){
             <div>
                 <Link to="/address" className="btn btn-primary">Add Address</Link>                   
             </div>
-        
+            {user && (
+            <button
+                className="btn btn-danger mt-3"
+                onClick={() => {
+                logout();
+                localStorage.removeItem("userId");
+                }}
+            >
+                Logout
+            </button>
+            )}
         </div>
         </>
     )

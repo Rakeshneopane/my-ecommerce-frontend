@@ -6,6 +6,8 @@ import { toast } from "react-toastify";
 export default function Products() {
   const {
     allProducts,
+    products,
+    searchTerm,
     sectionTypeMap,
     toggleWishList,
     wishlist,
@@ -146,7 +148,7 @@ export default function Products() {
     }
   }
 
-  let filtered = sortTheFiltered(allProducts.filter(match));
+  let filtered = sortTheFiltered(products.filter(match));
 
   // ---------------- BUTTON HANDLERS ----------------
   const handleWishList = (e, productId, title) => {
@@ -175,166 +177,189 @@ export default function Products() {
   console.log(filtered)
   return (
     <div className="container py-4">
-      <div className="row">
-        {/* FILTERS */}
-        <aside className="col-md-3">
-          <div>
-          <div className="d-flex justify-content-between mb-3">
-            <span className="h4">Filters</span>
-            <span className="btn btn-sm btn-warning" onClick={clearFilters}>
-              Clear Filters 
-            </span>
+      <div className="row gy-4">
+
+        {/* FILTERS SIDEBAR (collapsible on mobile) */}
+        <aside className="col-12 col-md-3">
+
+          <div className="d-md-none mb-3">
+            <button
+              className="btn btn-success w-100"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#filterMenu"
+            >
+              Filters ⚙️
+            </button>
           </div>
 
-          {/* SECTIONS */}
-          <h6 className="mt-3">Sections</h6>
-          {sections.map((sec) => (
-            <div key={sec}>
-              <input
-                className="form-check-input"
-                type="checkbox"
-                name="sections"
-                value={sec}
-                checked={filters.sections.includes(sec)}
-                onChange={handleCheck}
-              /> {" "}
-              <label className="form-check-label"> {sec}</label>
-            </div>
-          ))}
+          <div className="collapse d-md-block" id="filterMenu">
+            <div className="card p-3 shadow-sm">
 
-          {/* TYPES */}
-          <h6 className="mt-3">Types</h6>
-          {sections.flatMap((sec) =>
-            sectionTypeMap[sec].types.map((t) => (
-              <div key={t.name}>
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  name="types"
-                  value={t.name}
-                  checked={filters.types.includes(t.name)}
-                  onChange={handleCheck}
-                />{" "}
-                <label className="form-check-label"> {t.name}</label>
+              <div className="d-flex justify-content-between mb-2">
+                <span className="h5 m-0">Filters</span>
+                <button className="btn btn-sm btn-warning" onClick={clearFilters}>
+                  Clear
+                </button>
               </div>
-            ))
-          )}
 
-          {/* PRICE SLIDER */}
-          <h6 className="mt-3">Price Range</h6>
-          <input
-            
-            type="range"
-            min="0"
-            max="200000"
-            step="500"
-            value={priceRange[1]}
-            onChange={(e) => {
-              const newMax = Number(e.target.value);
-              setPriceRange([0, newMax]);
-              setFilters((prev) => ({ ...prev, price: [newMax] }));
-            }}
-          />
-          <p>Up to: ₹{priceRange[1]}</p>
+              {/* SECTIONS */}
+              <h6 className="mt-3">Sections</h6>
+              {sections.map((sec) => (
+                <div key={sec} className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    name="sections"
+                    value={sec}
+                    checked={filters.sections.includes(sec)}
+                    onChange={handleCheck}
+                  />
+                  <label className="form-check-label">{sec}</label>
+                </div>
+              ))}
 
-          {/* QUICK PRICE FILTERS */}
-          <h6>Quick Price Filters</h6>
-          {[500, 2000, 5000, 10000].map((p) => (
-            <div key={p}>
+              {/* TYPES */}
+              <h6 className="mt-3">Types</h6>
+              {sections.flatMap((sec) =>
+                sectionTypeMap[sec].types.map((t) => (
+                  <div key={t.name} className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      name="types"
+                      value={t.name}
+                      checked={filters.types.includes(t.name)}
+                      onChange={handleCheck}
+                    />
+                    <label className="form-check-label">{t.name}</label>
+                  </div>
+                ))
+              )}
+
+              {/* PRICE SLIDER */}
+              <h6 className="mt-3">Price Range</h6>
               <input
-                className="form-check-input"
-                type="checkbox"
-                name="price"
-                value={p}
-                checked={filters.price.includes(p)}
-                onChange={handleCheck}
-              /> {" "}
-              <label className="form-check-label">Up to ₹{p}</label>
-            </div>
-          ))}
+                type="range"
+                min="0"
+                max="200000"
+                step="500"
+                value={priceRange[1]}
+                onChange={(e) => {
+                  const newMax = Number(e.target.value);
+                  setPriceRange([0, newMax]);
+                  setFilters((prev) => ({ ...prev, price: [newMax] }));
+                }}
+                className="form-range"
+              />
+              <p className="small text-muted">Up to: ₹{priceRange[1]}</p>
 
-          {/* RATING */}
-          <h6 className="mt-3">Rating</h6>
-          {[4, 3, 2, 1].map((r) => (
-            <div key={r}>
-              <input
-                className="form-check-input"
-                type="checkbox"
-                name="rating"
-                value={r}
-                checked={filters.rating.includes(r)}
-                onChange={handleCheck}
-              />{" "}
-              <label className="form-check-label">{r} ⭐ & above</label>
-            </div>
-          ))}
+              {/* QUICK PRICE FILTERS */}
+              <h6>Quick Prices</h6>
+              {[500, 2000, 5000, 10000].map((p) => (
+                <div key={p} className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    name="price"
+                    value={p}
+                    checked={filters.price.includes(p)}
+                    onChange={handleCheck}
+                  />
+                  <label className="form-check-label">Up to ₹{p}</label>
+                </div>
+              ))}
 
-          {/* SORT */}
-          <h6 className="mt-3">Sort</h6>
-          <select
-            name="sort"
-            value={filters.sort}
-            className="form-select"
-            onChange={(e) =>
-              setFilters((prev) => ({ ...prev, sort: e.target.value }))
-            }
-          >
-            <option value="">All</option>
-            <option value="low-high">Low to high</option>
-            <option value="high-low">High to low</option>
-            <option value="relevance">Relevance</option>
-            <option value="best-rated">Best Rated</option>
-          </select>
+              {/* RATING */}
+              <h6 className="mt-3">Rating</h6>
+              {[4, 3, 2, 1].map((r) => (
+                <div key={r} className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    name="rating"
+                    value={r}
+                    checked={filters.rating.includes(r)}
+                    onChange={handleCheck}
+                  />
+                  <label className="form-check-label">{r} ⭐ & above</label>
+                </div>
+              ))}
+
+              {/* SORT */}
+              <h6 className="mt-3">Sort By</h6>
+              <select
+                name="sort"
+                value={filters.sort}
+                className="form-select"
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, sort: e.target.value }))
+                }
+              >
+                <option value="">All</option>
+                <option value="low-high">Low → High</option>
+                <option value="high-low">High → Low</option>
+                <option value="relevance">Relevance</option>
+                <option value="best-rated">Best Rated</option>
+              </select>
+
+            </div>
           </div>
         </aside>
 
         {/* PRODUCT GRID */}
-        <section className="col-md-9">
-          <h3>
-            {filtered.length === 1 ? "Product" : "Products"} ({filtered.length})
-          </h3>
+        <section className="col-12 col-md-9">
 
-          <div className="row my-2">
+          <h4 className="mb-3">
+            {filtered.length} {filtered.length === 1 ? "Product" : "Products"}
+          </h4>
+
+          <div className="row g-3">
             {filtered.map((p) => (
-              <div key={p.id} className="col-6 col-md-4 col-lg-3 my-2">
-                <Link
-                  to={`/product-detail/${p.id}`}
-                  className="text-decoration-none"
-                >
-                  <div className="card">
+              <div key={p.id} className="col-6 col-sm-6 col-md-4 col-lg-3">
+
+                <Link to={`/product-detail/${p.id}`} className="text-decoration-none text-dark">
+                  <div className="card h-100 shadow-sm hover-shadow">
+
                     <img
                       src={p.images[0]}
+                      className="card-img-top"
                       style={{ height: "200px", objectFit: "cover" }}
                     />
 
                     <div className="card-body">
-                      <p className="fw-bold">{p.title}</p>
-                      <span>{p.category}</span> {" "}|{" "}
-                      <span>{p.sectionName || "No section metioned"}</span>{" "}|{" "}
-                      <span>{ p.typesName || "No type metioned"}</span>
-                      <p><b>₹{p.price}</b></p>
-                      <p>⭐ {p.rating}</p>
-                     {p.price > 1000 ?  <p className="badge rounded-pill text-bg-success"> Free Delivery</p>: <p className="badge rounded-pill text-bg-danger"> Paid Delivery</p> }
+                      <p className="fw-semibold small">{p.title}</p>
+                      <p className="text-muted small">
+                        {p.category} | {p.sectionName}
+                      </p>
+                      <p className="fw-bold mb-1">₹{p.price}</p>
+                      <p className="small">⭐ {p.rating}</p>
 
-                      <div className="d-flex justify-content-center gap-2">
-                        <button
-                          className="btn btn-sm btn-outline-warning"
-                          onClick={(e) =>
-                            handleCart(e, p.id, p.title, p.isInCart)
-                          }
-                        >
-                          🛒
-                        </button>
+                      {p.price > 1000 ? (
+                        <span className="badge text-bg-success">Free Delivery</span>
+                      ) : (
+                        <span className="badge text-bg-danger">Paid Delivery</span>
+                      )}
+                    </div>
 
-                        <button
-                          className={`btn btn-sm ${
-                            wishlist.includes(p.id) ? "btn-danger" : "btn-outline-danger"
-                          }`}
-                          onClick={(e) => handleWishList(e, p.id, p.title)}
-                        >
-                          ❤️
-                        </button>
-                      </div>
+                    <div className="card-footer bg-white d-flex justify-content-center gap-2">
+                      <button
+                        className="btn btn-sm btn-outline-warning"
+                        onClick={(e) => handleCart(e, p.id, p.title)}
+                      >
+                        🛒
+                      </button>
+
+                      <button
+                        className={`btn btn-sm ${
+                          wishlist.includes(p.id)
+                            ? "btn-danger"
+                            : "btn-outline-danger"
+                        }`}
+                        onClick={(e) => handleWishList(e, p.id, p.title)}
+                      >
+                        ❤️
+                      </button>
                     </div>
                   </div>
                 </Link>

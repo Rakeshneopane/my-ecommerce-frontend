@@ -46,7 +46,16 @@ export default function ProductDetails() {
 
   if (!product) return <p>Loading...</p>;
 
-  const sizes = ["S", "M", "L", "XL", "XXL"];
+  const SIZE_MAP = {
+    Apparel: ["S", "M", "L", "XL", "XXL"],
+    Footwear: ["40", "41", "42", "43", "44"],
+    Electronics: ["8GB RAM", "16GB RAM", "32GB RAM"],
+    Eyewear: ["140", "145", "150","155"],
+    Toys: ["S", "M"],
+    default: [] // electronics & others
+  };
+const sizes = SIZE_MAP[product.category] || SIZE_MAP.Apparel;
+
 
   // -------------------
   // WISHLIST
@@ -174,6 +183,7 @@ export default function ProductDetails() {
           </div>
 
           {/* Size Selection */}
+          {sizes.length > 0 && ( 
           <div className="my-3">
             <strong>Size: </strong>
             <div className="d-flex flex-wrap gap-2 mt-2">
@@ -192,7 +202,7 @@ export default function ProductDetails() {
               ))}
             </div>
           </div>
-
+              )}
           <hr />
           <h5>Description:</h5>
           <ul>
