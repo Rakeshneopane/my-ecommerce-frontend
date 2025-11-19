@@ -9,6 +9,7 @@ export default function Cart() {
     removeCartItem,
     changeCartQuantity,
     toggleWishList,
+    clearCart
   } = useProductContext();
 
   const [loading, setLoading] = useState(false);
@@ -70,6 +71,8 @@ export default function Cart() {
 
       setOrderStatus("success");
       toast.success("🎉 Order placed successfully!");
+      clearCart();                    
+      localStorage.removeItem("cartItems"); 
     } catch (err) {
       console.error("Order error:", err);
       setOrderStatus("error");
@@ -88,43 +91,47 @@ export default function Cart() {
   };
 
   return (
-    <div className="container bg-light py-4 my-3 rounded shadow-sm">
-      <ToastContainer position="top-center" autoClose={2000} hideProgressBar />
+  <div className="container py-3">
+    <ToastContainer position="top-center" autoClose={2000} hideProgressBar />
 
-      <h2 className="mb-4">🛒 Your Cart</h2>
+    <h3 className="mb-3 text-center">🛒 Your Cart</h3>
 
-      <div className="row g-4">
+    <div className="row g-3">
 
-        {/* LEFT SIDE */}
-        <div className="col-lg-8">
-          {cartItems.length === 0 ? (
-            <div className="text-center py-5">
-              <h5>Your cart is empty.</h5>
-              <p className="text-muted">Add some items to get started!</p>
-            </div>
-          ) : (
-            cartItems.map((item) => (
-              <div
-                key={`${item.productId}-${item.size}`}
-                className="card mb-3 shadow-sm border-0 p-3 d-flex flex-row align-items-center"
-              >
+      {/* LEFT SECTION — CART ITEMS */}
+      <div className="col-12 col-lg-8">
+
+        {cartItems.length === 0 ? (
+          <div className="text-center py-5 bg-light rounded shadow-sm">
+            <h5>Your cart is empty</h5>
+            <p className="text-muted">Add products to proceed</p>
+          </div>
+        ) : (
+          cartItems.map((item) => (
+            <div
+              key={`${item.productId}-${item.size}`}
+              className="card border-0 shadow-sm p-3 mb-3"
+            >
+              <div className="d-flex gap-3 align-items-center">
+
+                {/* IMAGE */}
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="rounded me-3 border"
-                  style={{ width: "100px", height: "100px", objectFit: "cover" }}
+                  className="rounded"
+                  style={{ width: "90px", height: "90px", objectFit: "cover" }}
                 />
 
+                {/* PRODUCT INFO */}
                 <div className="flex-grow-1">
                   <h6 className="mb-1">{item.title}</h6>
                   <p className="text-muted small mb-1">₹{item.price}</p>
 
-                  {/* Size */}
                   <p className="text-muted small mb-1">
                     <strong>Size:</strong> {item.size}
                   </p>
 
-                  {/* Quantity */}
+                  {/* QUANTITY BUTTONS */}
                   <div className="d-flex align-items-center mb-2">
                     <strong className="me-2">Qty:</strong>
 
@@ -149,82 +156,85 @@ export default function Cart() {
                     </button>
                   </div>
 
-                  {/* Remove */}
-                  <div>
+                  {/* ACTION BUTTONS */}
+                  <div className="d-flex gap-2">
                     <button
+                      className="btn btn-sm btn-outline-danger w-50"
                       onClick={() =>
                         handleRemove(item.productId, item.size, item.title)
                       }
-                      className="btn btn-sm btn-outline-danger"
                     >
                       Remove
-                    </button>{" "}
+                    </button>
+
                     <button
-                      onClick={() =>{
+                      className="btn btn-sm btn-outline-warning w-50"
+                      onClick={() => {
                         toggleWishList(item.productId);
                         handleRemove(item.productId, item.size, item.title);
-                      }
-                    }
-                      className="btn btn-sm btn-outline-warning"
+                      }}
                     >
-                      ❤️ Move to WishList
+                      ❤️ Wishlist
                     </button>
                   </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
-
-        {/* RIGHT SIDE SUMMARY */}
-        {cartItems.length > 0 && (
-          <div className="col-lg-4">
-            <div className="card p-3 shadow-sm border-0">
-              <h5>Price Details</h5>
-              <hr />
-
-              <p className="d-flex justify-content-between mb-1">
-                <span>Items:</span> <strong>{totalItems}</strong>
-              </p>
-
-              <p className="d-flex justify-content-between mb-1">
-                <span>Total Price:</span> <strong>₹{totalPrice}</strong>
-              </p>
-
-              <p className="d-flex justify-content-between mb-1">
-                <span>Delivery:</span> <span className="text-success">Free</span>
-              </p>
-
-              <hr />
-
-              <h6 className="d-flex justify-content-between">
-                <span>Total Amount:</span> <strong>₹{totalPrice}</strong>
-              </h6>
-
-              <button
-                className="btn btn-primary mt-3 w-100"
-                onClick={handlePlaceOrder}
-                disabled={loading}
-              >
-                {loading ? "Placing Order..." : "Place Order"}
-              </button>
-
-              {orderStatus === "success" && (
-                <p className="text-success mt-2 text-center fw-semibold">
-                  ✅ Order placed successfully!
-                </p>
-              )}
-
-              {orderStatus === "error" && (
-                <p className="text-danger mt-2 text-center fw-semibold">
-                  ❌ Error placing order.
-                </p>
-              )}
             </div>
-          </div>
+          ))
         )}
-
       </div>
+
+      {/* RIGHT SECTION — SUMMARY */}
+      {cartItems.length > 0 && (
+        <div className="col-12 col-lg-4">
+          <div className="card shadow-sm p-3 border-0">
+
+            <h5 className="text-center">Price Details</h5>
+            <hr />
+
+            <p className="d-flex justify-content-between mb-1">
+              <span>Items:</span> <strong>{totalItems}</strong>
+            </p>
+
+            <p className="d-flex justify-content-between mb-1">
+              <span>Total Price:</span> <strong>₹{totalPrice}</strong>
+            </p>
+
+            <p className="d-flex justify-content-between mb-1">
+              <span>Delivery:</span> <span className="text-success">Free</span>
+            </p>
+
+            <hr />
+
+            <h6 className="d-flex justify-content-between">
+              <span>Total Amount:</span> <strong>₹{totalPrice}</strong>
+            </h6>
+
+            <button
+              className="btn btn-primary mt-3 w-100 py-2"
+              onClick={handlePlaceOrder}
+              disabled={loading}
+            >
+              {loading ? "Placing Order..." : "Place Order"}
+            </button>
+
+            {orderStatus === "success" && (
+              <p className="text-success mt-2 text-center fw-semibold">
+                ✅ Order placed!
+              </p>
+            )}
+
+            {orderStatus === "error" && (
+              <p className="text-danger mt-2 text-center fw-semibold">
+                ❌ Order failed.
+              </p>
+            )}
+
+          </div>
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
+
 }

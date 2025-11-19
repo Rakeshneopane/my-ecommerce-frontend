@@ -1,182 +1,193 @@
 import { useUserContext } from "../contexts/userContext";
-import {useState, useEffect} from "react";
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
-export default function UserProfile (){
-    const { user, saveUser,logout } = useUserContext();
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
+export default function UserProfile() {
+  const { user, saveUser, logout } = useUserContext();
+  const navigate = useNavigate();
 
-    const [formData, setFormData] = useState({
-        name: "",
-        surname: "",
-        gender: "",
-        email: "",
-        phone: "",
-    });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
-    useEffect(() => {
-        if (user) {
-        setFormData({
-            name: user.name || "",
-            surname: user.surname || "",
-            gender: user.gender || "",
-            email: user.email || "",
-            phone: user.phone || "",
-        });
-        }
-    }, [user]);
+  const [formData, setFormData] = useState({
+    name: "",
+    surname: "",
+    gender: "",
+    email: "",
+    phone: "",
+  });
 
-    const handleSubmit = async(e)=>{
-        e.preventDefault();
-        setLoading(true);
-        const url = "https://my-ecommerce-eta-ruby.vercel.app/api/users"
-        try {
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(formData) 
-            });
-
-            if(!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`)
-            }
-
-            const data = await response.json();
-            console.log("Data in userProfile", data);            
-            
-            saveUser(data.user);
-            localStorage.setItem("userId", data.user._id);
-
-            setSuccess("User saved successfully!");
-            setFormData({ name: "", surname: "", gender: "", email: "", phone: "" });
-            setError(null);
-        } catch (error) {
-            setSuccess(null);
-            setError("Failed to save user. Please try again.");
-        } finally{setLoading(false)}
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || "",
+        surname: user.surname || "",
+        gender: user.gender || "",
+        email: user.email || "",
+        phone: user.phone || "",
+      });
     }
-    return(
-        <>
-        <div className="container card p-3 my-4">
-        { user && (
-            <div className="">
-                <div className="card p-2 my-2">
-                    <p>Account user: {user.name} {user.surname}</p>
-                    <p>Gender: {user.gender}</p>      
-                    <p>Email: {user.email}</p>  
-                    <p>Phone: {user.phone}</p>
-                    </div>
-                <div className="card p-2 m-2">
-                        {user.addresses.map((address, index)=>(
-                            <div key={index}>
-                                <p>Area: {address.area}</p>
-                                <p>City: {address.city}</p>
-                                <p>State: {address.state}</p>
-                                <p>Pin: {address.pincode}</p>
-                                {address?.type && <p>Address Type: {address.type}</p>}
-                            </div>
-                        ))}
-                    </div>
+  }, [user]);
+
+  const handleSelectAddress = (addressId) => {
+    localStorage.setItem("addressId", addressId);
+    setSuccess("Address selected!");
+    setTimeout(() => setSuccess(null), 1200);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const res = await fetch(
+        "https://my-ecommerce-eta-ruby.vercel.app/api/users",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        }
+      );
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+
+      saveUser(data.user);
+      localStorage.setItem("userId", data.user._id);
+      setSuccess("Profile created!");
+    } catch (err) {
+      setError("Failed to create user");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    localStorage.removeItem("userId");
+    localStorage.removeItem("addressId");
+    navigate("/login");
+  };
+
+  return (
+    <div className="container py-3">
+      <div className="card shadow-sm p-3">
+
+        {user ? (
+          <>
+            <h4 className="fw-bold mb-3">My Profile</h4>
+
+            {/* USER INFO */}
+            <div className="card p-3 mb-3 shadow-sm">
+              <strong>{user.name} {user.surname}</strong>
+              <p className="mb-1">Gender: {user.gender}</p>
+              <p className="mb-1">Email: {user.email}</p>
+              <p className="mb-0">Phone: {user.phone}</p>
             </div>
-        ) }
-        
-           { !user && <div className="form">
-            <form action="" onSubmit={(e)=>handleSubmit(e)}>
-                <label htmlFor="" className="form-label">
-                    <p> Personal Information </p> 
-                </label>
-                    <input 
-                        type="text"  
-                        value={formData.name} 
-                        onChange={(e)=>setFormData((prev)=>({...prev, name: e.target.value}))} 
-                        placeholder="your first name"
-                        required
-                        className="form-control"
-                    />
-                    <br />
-                    <input 
-                        type="text" 
-                        value={formData.surname} 
-                        onChange={(e)=>setFormData((prev)=>({...prev, surname: e.target.value}))} 
-                        placeholder="your last name"
-                        required
-                        className="form-control"
-                    />
-                
-                <br />
-                <label htmlFor="" className="form-label"  >
-                    <p>Your Gender</p>
-                     </label>
-                     <br />
-                    <input 
-                        type="radio" 
-                        name="gender" 
-                        checked={formData.gender === "male"} 
-                        value={"male"}  
-                        onChange={(e) =>setFormData((prev) => ({ ...prev, gender: e.target.value }))}
-                        required
-                        /> Male
-                        {"  "}
-                    <input 
-                        type="radio" 
-                        name="gender" 
-                        checked={formData.gender === "female"} 
-                        value={"female"} 
-                        onChange={(e) =>setFormData((prev) => ({ ...prev, gender: e.target.value }))}
-                        required
-                        /> Female
-               
-                <br />
-                <br />
-                <label htmlFor=""  className="form-label">
-                    <p> Email Address </p>
-                </label>
-                    <input 
-                        type="email"  
-                        value={formData.email} 
-                        onChange={(e)=>setFormData((prev)=>({...prev, email: e.target.value}))} 
-                        placeholder="your email"
-                        required
-                         className="form-control"
-                    />
-                
-                <br />
-                <label htmlFor=""  className="form-label">
-                   <p> Mobile Number </p> 
-                </label>   
-                    <input 
-                        type="text" 
-                        value={formData.phone} 
-                        onChange={(e)=>setFormData((prev)=>({...prev, phone: e.target.value}))} 
-                        placeholder="your phone number" 
-                        required
-                        className="form-control"
-                    />
-                <br />
-                <br />
-                <button type="submit" disabled={loading} className="btn btn-primary"> {loading ? "Saving..." : "Submit"} </button>
-            </form>
-            {success && <p className="success">{success}</p>}
-            {error && <p className="error">{error}</p>}
-            </div>}
-            <br />
+
+            {/* ADDRESS LIST */}
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <h5 className="fw-bold">My Addresses</h5>
+              <div className="d-flex gap-2">
+                <Link className="btn btn-sm btn-primary" to="/address">➕ Add</Link>
+                <button className="btn btn-sm btn-danger" onClick={handleLogout}>Logout</button>
+              </div>
+            </div>
+
             <div>
-                <Link to="/address" className="btn btn-primary">Add Address</Link>                   
+              {user.addresses?.map((address) => {
+                const isSelected = localStorage.getItem("addressId") === address._id;
+                return (
+                  <div
+                    key={address._id}
+                    className={`card p-3 mb-2 shadow-sm ${
+                      isSelected ? "border border-success" : "border"
+                    }`}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => handleSelectAddress(address._id)}
+                  >
+                    <div className="d-flex align-items-start">
+                      <input
+                        type="radio"
+                        className="me-3 mt-1"
+                        name="address"
+                        checked={isSelected}
+                        onChange={() => handleSelectAddress(address._id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+
+                      <div className="flex-grow-1">
+                        <strong className="d-block">{address.addressType}</strong>
+
+                        <p className="mb-1">{address.area}</p>
+                        <p className="mb-1">{address.city}, {address.state} - {address.pincode}</p>
+                        {address.landmark && <p className="mb-1">Landmark: {address.landmark}</p>}
+                        {address.alternatePhone && <p className="mb-1">Alt Phone: {address.alternatePhone}</p>}
+
+                        <Link
+                          to={`/address?id=${address._id}`}
+                          className="btn btn-sm btn-outline-primary mt-2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Edit
+                        </Link>
+
+                      </div>
+                    </div>
+
+                    <small className="text-muted">
+                      {isSelected ? "✔ Selected for orders" : "Tap to select"}
+                    </small>
+                  </div>
+                );
+              })}
             </div>
-            {user && (
-            <button
-                className="btn btn-danger mt-3"
-                onClick={() => {
-                logout();
-                localStorage.removeItem("userId");
-                }}
-            >
-                Logout
+          </>
+        ) : (
+          /* USER CREATION FORM */
+          <form onSubmit={handleSubmit}>
+            <h4 className="fw-bold mb-3">Create Profile</h4>
+
+            <input className="form-control mb-2" placeholder="First Name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} />
+
+            <input className="form-control mb-2" placeholder="Last Name"
+              value={formData.surname}
+              onChange={(e) => setFormData(prev => ({ ...prev, surname: e.target.value }))} />
+
+            <label className="fw-semibold">Gender</label>
+            <div className="mb-2">
+              <label className="me-3">
+                <input type="radio" name="gender" value="male"
+                  checked={formData.gender === "male"}
+                  onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value }))} /> Male
+              </label>
+
+              <label>
+                <input type="radio" name="gender" value="female"
+                  checked={formData.gender === "female"}
+                  onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value }))} /> Female
+              </label>
+            </div>
+
+            <input className="form-control mb-2" placeholder="Email"
+              value={formData.email}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} />
+
+            <input className="form-control mb-3" placeholder="Phone"
+              value={formData.phone}
+              onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))} />
+
+            <button className="btn btn-primary w-100" disabled={loading}>
+              {loading ? "Saving..." : "Create Profile"}
             </button>
-            )}
-        </div>
-        </>
-    )
+
+            {success && <p className="text-success mt-2">{success}</p>}
+            {error && <p className="text-danger mt-2">{error}</p>}
+          </form>
+        )}
+      </div>
+    </div>
+  );
 }

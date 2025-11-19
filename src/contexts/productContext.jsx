@@ -152,6 +152,10 @@ export default function ProductProvider({ children }) {
     setSectionTypeMap(map);
   }, [sectionRes, typeRes]);
 
+  const clearCart = () => {
+    setCartItems([]);
+    localStorage.setItem("cartItems", "[]");
+  };
   return (
     <ProductContext.Provider
       value={{
@@ -170,6 +174,7 @@ export default function ProductProvider({ children }) {
         addToCart,
         changeCartQuantity,
         removeCartItem,
+        clearCart,
       }}
     >
       {children}

@@ -41,103 +41,112 @@ export default function Header() {
     navigate(`/products${term ? `?search=${encodeURIComponent(term)}` : ""}`);
   };
 
-  return (
-    <header className="bg-light text-success py-3 sticky-top shadow-sm">
-      <div className="container-fluid">
-        <nav className="navbar navbar-expand-md navbar-light bg-light">
-          <div className="container-fluid">
+ return (
+  <header className="bg-light text-success py-3 sticky-top shadow-sm">
+    <div className="container-fluid">
+      <nav className="navbar navbar-expand-md navbar-light bg-light">
 
-            {/* Brand */}
-            <Link to="/home" className="navbar-brand fw-bold">Merze</Link>
+        {/* Brand */}
+        <Link to="/home" className="navbar-brand fw-bold">
+          Merze
+        </Link>
 
-            {/* Mobile Toggle */}
-            <button
-              className="navbar-toggler"
-              type="button"
-              onClick={() => setShowNav((prev) => !prev)}
-            >
-              <span className="navbar-toggler-icon"></span>
-            </button>
+        {/* Mobile Toggle */}
+        <button
+          className="navbar-toggler"
+          type="button"
+          onClick={() => setShowNav((prev) => !prev)}
+        >
+          <span className="navbar-toggler-icon"></span>
+        </button>
 
-            {/* Collapsible Nav */}
-            <div className={`collapse navbar-collapse ${showNav ? "show" : ""}`}>
-              <ul className="navbar-nav ms-auto align-items-center">
+        {/* Collapsible Nav */}
+        <div className={`collapse navbar-collapse ${showNav ? "show" : ""}`}>
+          <ul className="navbar-nav ms-auto w-100 align-items-md-center">
 
-                {/* SEARCH BAR */}
-                <li className="nav-item mx-2">
-                  <form
-                    className="d-flex"
-                    autoComplete="off"
-                    onSubmit={handleSearchSubmit}
-                  >
-                    <input
-                      type="text"
-                      className="form-control me-2"
-                      placeholder="Search products..."
-                      value={searchInput}
-                      onChange={handleSearchChange}
-                      style={{ width: "250px" }}
-                    />
-                    <button className="btn btn-outline-success" type="submit">
-                      Search
-                    </button>
-                  </form>
-                </li>
+            {/* SEARCH: full width on mobile, small on big screen */}
+            <li className="nav-item w-100 my-2 my-md-0">
+              <form
+                className="d-flex w-100 justify-content-md-end"
+                autoComplete="off"
+                onSubmit={handleSearchSubmit}
+              >
+                <input
+                  type="text"
+                  className="form-control me-2"
+                  placeholder="Search..."
+                  value={searchInput}
+                  onChange={handleSearchChange}
+                  style={{
+                    maxWidth: "250px",  // small on large screens
+                    width: "100%",      // full-width on mobile
+                  }}
+                />
+                <button className="btn btn-outline-success d-none d-md-block" type="submit">
+                  Go
+                </button>
+                {/* Mobile icon button */}
+                <button className="btn btn-outline-success d-md-none" type="submit">
+                  🔍
+                </button>
+              </form>
+            </li>
 
-                {/* WISHLIST */}
-                <li className="nav-item">
-                  <Link to="/wish-list" className="nav-link">
-                    ❤️{wishCount ? `(${wishCount})` : ""}
-                  </Link>
-                </li>
+            {/* WISHLIST */}
+            <li className="nav-item mx-md-2 my-1">
+              <Link to="/wish-list" className="nav-link text-center">
+                ❤️{wishCount ? `(${wishCount})` : ""}
+              </Link>
+            </li>
 
-                {/* CART */}
-                <li className="nav-item">
-                  <Link to="/cart" className="nav-link">
-                    🛒 {cartCount ? `(${cartCount})` : ""}
-                  </Link>
-                </li>
+            {/* CART */}
+            <li className="nav-item mx-md-2 my-1">
+              <Link to="/cart" className="nav-link text-center">
+                🛒{cartCount ? `(${cartCount})` : ""}
+              </Link>
+            </li>
 
-                {/* ACCOUNT */}
-                <li className="nav-item">
-                  <Link to="/user" className="nav-link">
-                    Account
-                  </Link>
-                </li>
+            {/* ACCOUNT */}
+            <li className="nav-item mx-md-2 my-1">
+              <Link to="/user" className="nav-link text-center">
+                Account
+              </Link>
+            </li>
 
-                {/* LOGIN / LOGOUT */}
-                <li className="nav-item">
-                  {!user ? (
-                    <Link to="/login" className="nav-link">
-                      Login
-                    </Link>
-                  ) : (
-                    <button
-                      className="btn btn-link nav-link"
-                      onClick={() => {
-                        logout();
-                        localStorage.removeItem("userId");
-                        navigate("/login");
-                      }}
-                      style={{ textDecoration: "none" }}
-                    >
-                      Logout
-                    </button>
-                  )}
-                </li>
+            {/* LOGIN / LOGOUT (normal link, not button) */}
+            <li className="nav-item mx-md-2 my-1 text-center">
+              {!user ? (
+                <Link className="nav-link" to="/login">
+                  Login
+                </Link>
+              ) : (
+                <span
+                  className="nav-link"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    logout();
+                    localStorage.removeItem("userId");
+                    navigate("/login");
+                  }}
+                >
+                  Logout
+                </span>
+              )}
+            </li>
 
-                {/* ADMIN */}
-                <li className="nav-item">
-                  <Link to="/admin" className="nav-link">
-                    Admin
-                  </Link>
-                </li>
-              </ul>
-            </div>
+            {/* ADMIN (normal link) */}
+            <li className="nav-item mx-md-2 my-1">
+              <Link to="/admin" className="nav-link text-center">
+                Admin
+              </Link>
+            </li>
 
-          </div>
-        </nav>
-      </div>
-    </header>
-  );
+          </ul>
+        </div>
+      </nav>
+    </div>
+  </header>
+);
+
+
 }
