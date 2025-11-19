@@ -52,7 +52,7 @@ export default function ProductDetails() {
     Electronics: ["8GB RAM", "16GB RAM", "32GB RAM"],
     Eyewear: ["140", "145", "150","155"],
     Toys: ["S", "M"],
-    default: ["S", "M", "L", "XL", "XXL"] // electronics & others
+    default: [] // electronics & others
   };
 const sizes = SIZE_MAP[product.category] || SIZE_MAP.Apparel;
 
