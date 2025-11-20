@@ -23,10 +23,12 @@ export default function AddressManagement() {
     addressType: "",
   });
 
-  // if editing, prefill
+  // -------------------------
+  // PREFILL IF EDITING
+  // -------------------------
   useEffect(() => {
     if (editId && user?.addresses) {
-      const found = user.addresses.find(a => a._id === editId);
+      const found = user.addresses.find((a) => a._id === editId);
       if (found) {
         setAddressData({
           area: found.area || "",
@@ -35,21 +37,50 @@ export default function AddressManagement() {
           pincode: found.pincode || "",
           landmark: found.landmark || "",
           alternatePhone: found.alternatePhone || "",
-          addressType: found.addressType || found.type || "",
+          addressType: found.addressType || "",
         });
       }
     }
   }, [editId, user]);
 
   const handleChange = (field, value) => {
-    setAddressData(prev => ({ ...prev, [field]: value }));
+    setAddressData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // -------------------------
+  // DELETE ADDRESS
+  // -------------------------
+  const handleDelete = async () => {
+    if (!window.confirm("Delete this address?")) return;
+
+    try {
+      const url = `https://my-ecommerce-eta-ruby.vercel.app/api/users/${user._id}/addresses/${editId}`;
+
+      const res = await fetch(url, { method: "DELETE" });
+
+      if (!res.ok) throw new Error("Delete failed");
+
+      const updated = user.addresses.filter((a) => a._id !== editId);
+
+      saveUser({ ...user, addresses: updated });
+
+      if (localStorage.getItem("addressId") === editId) {
+        localStorage.removeItem("addressId");
+      }
+
+      navigate("/user");
+    } catch (err) {  
+      alert("Failed to delete address");
+    }
+  };
+
+  // -------------------------
+  // SUBMIT FORM (ADD / UPDATE)
+  // -------------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setSuccess(null);
 
     if (!user?._id) {
       setError("Create a user first.");
@@ -62,7 +93,7 @@ export default function AddressManagement() {
         ? `https://my-ecommerce-eta-ruby.vercel.app/api/users/${user._id}/addresses/${editId}`
         : `https://my-ecommerce-eta-ruby.vercel.app/api/users/${user._id}/addresses`;
 
-      const method = editId ? "PUT" : "POST";
+      const method = "POST";
 
       const res = await fetch(url, {
         method,
@@ -70,33 +101,27 @@ export default function AddressManagement() {
         body: JSON.stringify(addressData),
       });
 
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(`HTTP ${res.status} ${txt}`);
-      }
+      if (!res.ok) throw new Error("Save failed");
 
       const data = await res.json();
 
-      // Update user in context so UI refreshes
-      // When editing, replace the address; when adding, append
-      let updatedAddresses = Array.isArray(user?.addresses) ? [...user.addresses] : [];
+      let updatedAddresses = [...(user.addresses || [])];
+
       if (editId) {
-        updatedAddresses = updatedAddresses.map(a => (a._id === editId ? data.address : a));
+        updatedAddresses = updatedAddresses.map((a) =>
+          a._id === editId ? data.address : a
+        );
       } else {
         updatedAddresses.push(data.address);
       }
 
       saveUser({ ...user, addresses: updatedAddresses });
+
       localStorage.setItem("addressId", data.address._id);
 
-      setSuccess(editId ? "Address updated." : "Address added.");
-      setTimeout(() => {
-        setSuccess(null);
-        navigate("/user");
-      }, 900);
+      navigate("/user");
     } catch (err) {
-      console.error(err);
-      setError("Failed to save address. Try again.");
+      setError("Failed to save address.");
     } finally {
       setLoading(false);
     }
@@ -112,9 +137,10 @@ export default function AddressManagement() {
             className="form-control mb-2"
             placeholder="Address (area / street)"
             value={addressData.area}
-            required
             onChange={(e) => handleChange("area", e.target.value)}
+            required
           />
+
           <input
             className="form-control mb-2"
             placeholder="City / District"
@@ -126,8 +152,8 @@ export default function AddressManagement() {
           <select
             className="form-control mb-2"
             value={addressData.state}
-            onChange={(e) => handleChange("state", e.target.value)}
             required
+            onChange={(e) => handleChange("state", e.target.value)}
           >
             <option value="">Select State</option>
             <option>Assam</option>
@@ -154,12 +180,15 @@ export default function AddressManagement() {
           />
 
           <input
-            className="form-control mb-2"
-            placeholder="Alternate phone (optional)"
+            className="form-control mb-3"
+            placeholder="Alternate Phone (optional)"
             value={addressData.alternatePhone}
-            onChange={(e) => handleChange("alternatePhone", e.target.value)}
+            onChange={(e) =>
+              handleChange("alternatePhone", e.target.value)
+            }
           />
 
+          {/* ADDRESS TYPE */}
           <div className="mb-3">
             <label className="me-3">
               <input
@@ -169,8 +198,10 @@ export default function AddressManagement() {
                 checked={addressData.addressType === "Home"}
                 onChange={(e) => handleChange("addressType", e.target.value)}
                 required
-              />{" "}Home
+              />{" "}
+              Home
             </label>
+
             <label>
               <input
                 type="radio"
@@ -178,25 +209,36 @@ export default function AddressManagement() {
                 value="Work"
                 checked={addressData.addressType === "Work"}
                 onChange={(e) => handleChange("addressType", e.target.value)}
-              />{" "}Work
+              />{" "}
+              Work
             </label>
           </div>
+            <div className="d-flex flex-column gap-2 mt-3">
+                <button
+                    className="btn btn-primary btn-sm"
+                    type="submit"
+                    disabled={loading}
+                >
+                    {loading ? "Saving..." : editId ? "Update Address" : "Save Address"}
+                </button>
+                <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => navigate("/user")}
+                >
+                    Cancel
+                </button>
 
-          <div className="d-flex gap-2">
-            <button className="btn btn-primary flex-fill" type="submit" disabled={loading}>
-              {loading ? "Saving..." : editId ? "Update Address" : "Save Address"}
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-outline-secondary"
-              onClick={() => navigate("/user")}
-            >
-              Cancel
-            </button>
-          </div>
-
-          {success && <p className="text-success mt-2">{success}</p>}
+                {editId && (
+                    <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    onClick={handleDelete}
+                    >
+                    Delete Address
+                    </button>
+                )}
+            </div>
           {error && <p className="text-danger mt-2">{error}</p>}
         </form>
       </div>
