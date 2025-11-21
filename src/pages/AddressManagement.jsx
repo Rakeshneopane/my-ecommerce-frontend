@@ -51,8 +51,7 @@ export default function AddressManagement() {
   // DELETE ADDRESS
   // -------------------------
   const handleDelete = async () => {
-    if (!window.confirm("Delete this address?")) return;
-
+   
     try {
       const url = `https://my-ecommerce-eta-ruby.vercel.app/api/users/${user._id}/addresses/${editId}`;
 

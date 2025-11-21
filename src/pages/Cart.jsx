@@ -99,7 +99,7 @@ export default function Cart() {
     <div className="row g-3">
 
       {/* LEFT SECTION — CART ITEMS */}
-      <div className="col-12 col-lg-8">
+      <div className={`${cartItems.length === 0 ? "col-12": "col-12 col-lg-8"}`}>
 
         {cartItems.length === 0 ? (
           <div className="text-center py-5 bg-light rounded shadow-sm">
